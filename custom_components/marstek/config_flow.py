@@ -4,12 +4,19 @@ import logging
 from typing import override
 
 from aiomarstek import MarstekDeviceInfo
-from probatio import Required as VolRequired, Schema as VolSchema
+from probatio import (
+    Optional as VolOptional,
+    Required as VolRequired,
+    Schema as VolSchema,
+)
 
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
-from homeassistant.const import CONF_DEVICE, CONF_HOST, CONF_MAC
+from homeassistant.const import CONF_DEVICE, CONF_HOST, CONF_MAC, CONF_PORT
 from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
@@ -22,15 +29,23 @@ from .const import (
     CONF_VERSION,
     CONF_WIFI_MAC,
     CONF_WIFI_NAME,
+    DEFAULT_PORT,
     DOMAIN,
+    SCAN_PORTS,
     SUPPORTED_DEVICE_TYPES,
 )
-from .coordinator import MARSTEK_SHARED_DATA
-from .helpers import async_create_udp_client
+from .helpers import async_client, async_find_port, model_name
 
 _LOGGER = logging.getLogger(__name__)
 
-STEP_MANUAL_DATA_SCHEMA = VolSchema({VolRequired(CONF_HOST): TextSelector()})
+STEP_MANUAL_DATA_SCHEMA = VolSchema(
+    {
+        VolRequired(CONF_HOST): TextSelector(),
+        VolOptional(CONF_PORT): NumberSelector(
+            NumberSelectorConfig(min=1, max=65535, mode=NumberSelectorMode.BOX)
+        ),
+    }
+)
 
 
 class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -71,13 +86,13 @@ class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         host = self.discovered_device_options[str(user_input[CONF_DEVICE])].ip
 
         try:
-            device = await self._async_get_device_from_host(host)
+            device = await self._async_get_device_from_host(host, DEFAULT_PORT)
         except TimeoutError, OSError:
             errors["base"] = "cannot_connect"
         except TypeError:
             errors["base"] = "device_not_found"
         else:
-            return await self._async_create_entry_from_device(device)
+            return await self._async_create_entry_from_device(device, DEFAULT_PORT)
 
         return self.async_show_form(
             step_id="discover",
@@ -104,18 +119,10 @@ class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, errors: dict[str, str]
     ) -> list[MarstekDeviceInfo] | None:
         """Return supported discovered devices or record an error."""
-        shared_data = self.hass.data.get(MARSTEK_SHARED_DATA)
-        udp_client = shared_data.udp_client if shared_data is not None else None
         try:
-            if udp_client is None:
-                udp_client = await async_create_udp_client(self.hass)
-                discovered_devices = await udp_client.discover_devices()
-                await udp_client.async_cleanup()
-            else:
+            async with async_client(self.hass, DEFAULT_PORT) as udp_client:
                 discovered_devices = await udp_client.discover_devices()
         except TimeoutError, OSError, TypeError:
-            if shared_data is None and udp_client is not None:
-                await udp_client.async_cleanup()
             errors["base"] = "discovery_failed"
             return None
 
@@ -147,10 +154,7 @@ class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         device_options: list[SelectOptionDict] = []
         for index, device in enumerate(supported_devices):
-            device_label = (
-                f"{device.device_type} v{device.version} "
-                f"({device.wifi_name or 'No WiFi'}) - {device.ip or 'Unknown IP'}"
-            )
+            device_label = f"Marstek {model_name(device.device_type)} ({device.ip or 'Unknown IP'})"
             if any(option["label"] == device_label for option in device_options):
                 device_label = f"{device_label} #{index + 1}"
 
@@ -179,7 +183,9 @@ class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._async_abort_entries_match({CONF_HOST: host})
 
             try:
-                device = await self._async_get_device_from_host(host)
+                device, port = await self._async_get_device_on_any_port(
+                    host, user_input.get(CONF_PORT)
+                )
             except TimeoutError, OSError:
                 errors["base"] = "cannot_connect"
             except TypeError:
@@ -188,7 +194,7 @@ class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if device.device_type not in SUPPORTED_DEVICE_TYPES:
                     errors["base"] = "unsupported_device"
                 else:
-                    return await self._async_create_entry_from_device(device)
+                    return await self._async_create_entry_from_device(device, port)
 
         return self.async_show_form(
             step_id="manual",
@@ -196,20 +202,31 @@ class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def _async_get_device_from_host(self, host: str) -> MarstekDeviceInfo:
-        """Fetch device information from a specific host."""
-        shared_data = self.hass.data.get(MARSTEK_SHARED_DATA)
-        udp_client = shared_data.udp_client if shared_data is not None else None
+    async def _async_get_device_on_any_port(
+        self, host: str, port: object
+    ) -> tuple[MarstekDeviceInfo, int]:
+        """Fetch device information on a given port, or find the Open API port."""
+        if port is not None:
+            port = int(port)
+            return await self._async_get_device_from_host(host, port), port
         try:
-            if udp_client is None:
-                udp_client = await async_create_udp_client(self.hass)
+            device = await self._async_get_device_from_host(host, DEFAULT_PORT)
+        except TimeoutError, OSError:
+            _LOGGER.debug("No reply from %s on port %s, scanning", host, DEFAULT_PORT)
+            if (found := await async_find_port(host, SCAN_PORTS)) is None:
+                raise
+            return await self._async_get_device_from_host(host, found), found
+        return device, DEFAULT_PORT
+
+    async def _async_get_device_from_host(
+        self, host: str, port: int
+    ) -> MarstekDeviceInfo:
+        """Fetch device information from a specific host."""
+        async with async_client(self.hass, port) as udp_client:
             return await udp_client.get_device_info(host)
-        finally:
-            if shared_data is None and udp_client is not None:
-                await udp_client.async_cleanup()
 
     async def _async_create_entry_from_device(
-        self, device: MarstekDeviceInfo
+        self, device: MarstekDeviceInfo, port: int
     ) -> ConfigFlowResult:
         """Create a config entry from normalized Marstek device data."""
         if device.device_type not in SUPPORTED_DEVICE_TYPES:
@@ -226,12 +243,15 @@ class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             unique_id,
         )
         await self.async_set_unique_id(unique_id)
-        self._abort_if_unique_id_configured(updates={CONF_HOST: device.ip})
+        self._abort_if_unique_id_configured(
+            updates={CONF_HOST: device.ip, CONF_PORT: port}
+        )
 
         return self.async_create_entry(
-            title=f"Marstek {device.device_type} v{device.version} ({device.ip})",
+            title=f"Marstek {model_name(device.device_type)} ({device.ip})",
             data={
                 CONF_HOST: device.ip,
+                CONF_PORT: port,
                 CONF_MAC: device.mac,
                 CONF_DEVICE_TYPE: device.device_type,
                 CONF_VERSION: device.version,

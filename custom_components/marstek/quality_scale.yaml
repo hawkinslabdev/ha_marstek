@@ -47,9 +47,7 @@ rules:
   entity-unavailable: done
   integration-owner: done
   log-when-unavailable: done
-  parallel-updates:
-    status: exempt
-    comment: This integration polls data using a coordinator, there is no need for parallel updates.
+  parallel-updates: done
   reauthentication-flow:
     status: exempt
     comment: This integration requires no authentication.
@@ -57,7 +55,7 @@ rules:
 
   # Gold
   devices: done
-  diagnostics: todo
+  diagnostics: done
   discovery-update-info: todo
   discovery:
     status: exempt
@@ -79,9 +77,7 @@ rules:
   exception-translations: todo
   icon-translations: todo
   reconfiguration-flow: todo
-  repair-issues:
-    status: exempt
-    comment: This integration doesn't have any cases where raising an issue is needed.
+  repair-issues: done
   stale-devices:
     status: exempt
     comment: This integration has a fixed single device.

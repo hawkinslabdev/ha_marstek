@@ -1,10 +1,12 @@
 """Sensor platform for Marstek devices."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 import logging
 from typing import override
 
 from homeassistant.components.sensor import (
+    DOMAIN as SENSOR_DOMAIN,
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
@@ -12,25 +14,45 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import (
     PERCENTAGE,
+    EntityCategory,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfPower,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from .const import BATTERY_STATUS_OPTIONS, DEVICE_MODE_OPTIONS, PV_STATE_OPTIONS
-from .coordinator import MarstekConfigEntry
+from .const import (
+    BATTERY_STATUS_OPTIONS,
+    DEVICE_MODE_OPTIONS,
+    DOMAIN,
+    ERROR_STATE_OPTIONS,
+    PV_MODELS,
+    PV_STATE_OPTIONS,
+)
+from .coordinator import MarstekConfigEntry, MarstekData
 from .entity import MarstekEntity
+from .helpers import (
+    battery_flow_power,
+    battery_status,
+    es_number,
+    model_name,
+    stored_energy,
+)
 
 _LOGGER = logging.getLogger(__name__)
+
+PARALLEL_UPDATES = 0
 
 
 @dataclass(frozen=True, kw_only=True)
 class MarstekSensorEntityDescription(SensorEntityDescription):
     """Describe a Marstek sensor entity."""
+
+    value_fn: Callable[[MarstekData], StateType] | None = None
 
 
 def _pv_sensor_descriptions() -> tuple[MarstekSensorEntityDescription, ...]:
@@ -96,11 +118,47 @@ SENSOR_DESCRIPTIONS: tuple[MarstekSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     MarstekSensorEntityDescription(
-        key="total_pv_energy",
-        translation_key="total_pv_energy",
+        key="battery_charge_power",
+        translation_key="battery_charge_power",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: battery_flow_power(data.status, "charging"),
+    ),
+    MarstekSensorEntityDescription(
+        key="battery_discharge_power",
+        translation_key="battery_discharge_power",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: battery_flow_power(data.status, "discharging"),
+    ),
+    MarstekSensorEntityDescription(
+        key="battery_energy_in",
+        translation_key="battery_energy_in",
         device_class=SensorDeviceClass.ENERGY,
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: es_number(data, "total_grid_input_energy"),
+    ),
+    MarstekSensorEntityDescription(
+        key="battery_energy_out",
+        translation_key="battery_energy_out",
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: es_number(data, "total_grid_output_energy"),
+    ),
+    MarstekSensorEntityDescription(
+        key="stored_energy",
+        translation_key="stored_energy",
+        device_class=SensorDeviceClass.ENERGY_STORAGE,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=stored_energy,
     ),
     MarstekSensorEntityDescription(
         key="device_mode",
@@ -115,6 +173,17 @@ SENSOR_DESCRIPTIONS: tuple[MarstekSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENUM,
         icon="mdi:battery",
         options=list(BATTERY_STATUS_OPTIONS),
+        value_fn=lambda data: battery_status(data.status),
+    ),
+)
+
+PV_SENSOR_DESCRIPTIONS: tuple[MarstekSensorEntityDescription, ...] = (
+    MarstekSensorEntityDescription(
+        key="total_pv_energy",
+        translation_key="total_pv_energy",
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     *_pv_sensor_descriptions(),
 )
@@ -130,9 +199,22 @@ async def async_setup_entry(
     device_ip = coordinator.device_ip
     _LOGGER.debug("Setting up Marstek sensors: %s", device_ip)
 
-    sensors = [
-        MarstekSensor(coordinator, description) for description in SENSOR_DESCRIPTIONS
+    descriptions = SENSOR_DESCRIPTIONS
+    if model_name(coordinator.device_info.device_type) in PV_MODELS:
+        descriptions += PV_SENSOR_DESCRIPTIONS
+    else:
+        registry = er.async_get(hass)
+        for description in PV_SENSOR_DESCRIPTIONS:
+            unique_id = f"{coordinator.device_info.stable_id}_{description.key}"
+            if entity_id := registry.async_get_entity_id(
+                SENSOR_DOMAIN, DOMAIN, unique_id
+            ):
+                registry.async_remove(entity_id)
+
+    sensors: list[SensorEntity] = [
+        MarstekSensor(coordinator, description) for description in descriptions
     ]
+    sensors.append(MarstekErrorSensor(coordinator, ERROR_STATE))
 
     _LOGGER.debug("Device %s sensors set up, total %d", device_ip, len(sensors))
     async_add_entities(sensors)
@@ -147,4 +229,31 @@ class MarstekSensor(MarstekEntity, SensorEntity):
     @override
     def native_value(self) -> StateType | None:
         """Return the state of the sensor."""
-        return self.coordinator.data.get_value(self.entity_description.key)
+        if value_fn := self.entity_description.value_fn:
+            return value_fn(self.coordinator.data)
+        return self.coordinator.data.status.get_value(self.entity_description.key)
+
+
+ERROR_STATE = SensorEntityDescription(
+    key="error_state",
+    translation_key="error_state",
+    device_class=SensorDeviceClass.ENUM,
+    entity_category=EntityCategory.DIAGNOSTIC,
+    options=list(ERROR_STATE_OPTIONS),
+)
+
+
+class MarstekErrorSensor(MarstekEntity, SensorEntity):
+    """Outcome of the latest poll; available while the device is silent."""
+
+    @property
+    @override
+    def available(self) -> bool:
+        """Return True so the error stays visible during outages."""
+        return True
+
+    @property
+    @override
+    def native_value(self) -> str:
+        """Return the latest poll outcome."""
+        return self.coordinator.error_state

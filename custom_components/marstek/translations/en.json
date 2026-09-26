@@ -24,10 +24,12 @@
             },
             "manual": {
                 "data": {
-                    "host": "Host"
+                    "host": "Host",
+                    "port": "Port"
                 },
                 "data_description": {
-                    "host": "The IP address of your Marstek device on your local network."
+                    "host": "The IP address of your Marstek device on your local network.",
+                    "port": "Open API UDP port set in the Marstek app. Leave empty to try 30000, then scan 49152–65535."
                 },
                 "description": "Enter the IP address of your Marstek device. The device must be on the same local network and have Open API enabled.",
                 "title": "Add Marstek device"
@@ -42,19 +44,50 @@
         }
     },
     "entity": {
+        "number": {
+            "passive_duration": {
+                "name": "Passive duration"
+            },
+            "passive_power": {
+                "name": "Passive power"
+            }
+        },
+        "select": {
+            "operating_mode": {
+                "name": "Operating mode",
+                "state": {
+                    "ai": "AI",
+                    "auto": "Auto",
+                    "passive": "Passive",
+                    "ups": "UPS"
+                }
+            }
+        },
         "sensor": {
+            "battery_charge_power": {
+                "name": "Charging power"
+            },
+            "battery_discharge_power": {
+                "name": "Discharging power"
+            },
+            "battery_energy_in": {
+                "name": "Battery energy in"
+            },
+            "battery_energy_out": {
+                "name": "Battery energy out"
+            },
             "battery_power": {
                 "name": "Battery power"
             },
             "battery_soc": {
-                "name": "Battery level"
+                "name": "State of charge"
             },
             "battery_status": {
                 "name": "Battery status",
                 "state": {
                     "charging": "Charging",
-                    "idle": "Idle",
-                    "selling": "Selling"
+                    "discharging": "Discharging",
+                    "idle": "Idle"
                 }
             },
             "device_mode": {
@@ -65,6 +98,15 @@
                     "manual": "Manual",
                     "passive": "Passive",
                     "ups": "UPS"
+                }
+            },
+            "error_state": {
+                "name": "Error state",
+                "state": {
+                    "invalid_data": "Invalid data",
+                    "network_error": "Network error",
+                    "no_response": "No response",
+                    "none": "No error"
                 }
             },
             "pv1_current": {
@@ -131,6 +173,9 @@
             "pv4_voltage": {
                 "name": "PV4 voltage"
             },
+            "stored_energy": {
+                "name": "Stored energy"
+            },
             "total_pv_energy": {
                 "name": "Lifetime PV energy"
             }
@@ -141,7 +186,7 @@
             "message": "Unable to connect to the Marstek device at {host}."
         },
         "device_update_failed": {
-            "message": "Unable to update the Marstek device at {host}."
+            "message": "Unable to update the Marstek device at {host}: {reason}."
         },
         "invalid_device_data": {
             "message": "The Marstek device at {host} returned invalid data."
@@ -149,11 +194,23 @@
         "missing_stable_id": {
             "message": "The Marstek device at {host} did not provide a stable ID."
         },
+        "set_mode_failed": {
+            "message": "Unable to change the operating mode of the Marstek device at {host}."
+        },
+        "set_mode_rejected": {
+            "message": "The Marstek device rejected operating mode {mode}."
+        },
         "udp_client_setup_failed": {
             "message": "Unable to set up the Marstek UDP client."
         },
         "unsupported_device": {
             "message": "The Marstek device type {device_type} is not currently supported."
+        }
+    },
+    "issues": {
+        "open_api_unreachable": {
+            "title": "Marstek Open API not responding",
+            "description": "The Marstek device at {host} has not answered Open API requests for 5 minutes. Firmware updates and resets can disable Open API. Re-enable Open API and confirm the UDP port in the Marstek app. This issue clears on the next successful poll."
         }
     }
 }

@@ -5,6 +5,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import MarstekDataUpdateCoordinator
+from .helpers import model_name
 
 
 class MarstekEntity(CoordinatorEntity[MarstekDataUpdateCoordinator]):
@@ -25,8 +26,9 @@ class MarstekEntity(CoordinatorEntity[MarstekDataUpdateCoordinator]):
         self._attr_unique_id = f"{device_info.stable_id}_{entity_description.key}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, device_info.stable_id)},
-            "name": f"Marstek {device_info.device_type} v{device_info.version}",
+            "name": f"Marstek {model_name(device_info.device_type)}",
             "manufacturer": "Marstek",
-            "model": device_info.device_type,
+            "model": model_name(device_info.device_type),
+            "model_id": device_info.device_type,
             "sw_version": str(device_info.version),
         }
