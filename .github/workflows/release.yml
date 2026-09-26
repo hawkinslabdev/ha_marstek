@@ -1,8 +1,9 @@
 name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*"
 
 permissions:
   contents: write
@@ -14,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set manifest version from tag
         env:
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ github.ref_name }}
         run: |
           version="${TAG#v}"
           if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.]+)?$ ]]; then
@@ -26,8 +27,8 @@ jobs:
       - name: Package integration
         working-directory: custom_components/marstek
         run: zip -r "$GITHUB_WORKSPACE/marstek.zip" . -x '__pycache__/*'
-      - name: Attach package to release
+      - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$TAG" marstek.zip --clobber
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" marstek.zip --title "$TAG" --generate-notes --verify-tag
