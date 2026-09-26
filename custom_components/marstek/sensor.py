@@ -38,7 +38,6 @@ from .helpers import (
     battery_status,
     es_number,
     model_name,
-    state_of_charge,
     stored_energy,
 )
 
@@ -108,7 +107,6 @@ SENSOR_DESCRIPTIONS: tuple[MarstekSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.BATTERY,
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=state_of_charge,
     ),
     MarstekSensorEntityDescription(
         key="battery_power",

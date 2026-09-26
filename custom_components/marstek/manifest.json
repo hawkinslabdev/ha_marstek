@@ -1,7 +1,7 @@
 {
   "domain": "marstek",
   "name": "Marstek (unofficial)",
-  "codeowners": ["@MarstekEnergy", "@hawkinslabdev"],
+  "codeowners": ["@hawkinslabdev"],
   "config_flow": true,
   "dependencies": ["network"],
   "documentation": "https://github.com/hawkinslabdev/ha_marstek",

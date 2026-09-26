@@ -87,23 +87,31 @@ def test_mode_config() -> None:
     }
 
 
-async def test_client_records_results_and_detects_silence() -> None:
-    """Raw results are kept per method; a poll without any reply raises."""
+async def test_client_keeps_latest_results_and_detects_silence() -> None:
+    """The latest result per method survives silent polls, which raise."""
     client = MarstekClient()
-    with patch.object(
-        MarstekUDPClient,
-        "send_request",
-        AsyncMock(return_value={"result": {"bat_cap": 1}}),
-    ):
+    status = MarstekDeviceStatus(device_ip="h")
+
+    async def answered_poll(*_args: object, **_kwargs: object) -> MarstekDeviceStatus:
         await client.send_request(command_builder.get_es_status(), "h")
-    assert client.results["h"]["ES.GetStatus"] == {"bat_cap": 1}
+        return status
 
     with (
         patch.object(
             MarstekUDPClient,
-            "get_device_status",
-            AsyncMock(return_value=MarstekDeviceStatus(device_ip="h")),
+            "send_request",
+            AsyncMock(return_value={"result": {"bat_cap": 1}}),
+        ),
+        patch.object(MarstekUDPClient, "get_device_status", side_effect=answered_poll),
+    ):
+        assert await client.get_device_status("h") is status
+    assert client.results["h"]["ES.GetStatus"] == {"bat_cap": 1}
+
+    with (
+        patch.object(
+            MarstekUDPClient, "get_device_status", AsyncMock(return_value=status)
         ),
         pytest.raises(TimeoutError),
     ):
         await client.get_device_status("h")
+    assert client.results["h"]["ES.GetStatus"] == {"bat_cap": 1}

@@ -99,10 +99,10 @@ async def test_battery_energy(hass: HomeAssistant) -> None:
     ],
 )
 @pytest.mark.usefixtures("init_integration")
-async def test_unreported_battery(hass: HomeAssistant) -> None:
-    """A zero capacity means the firmware reports no battery data."""
-    assert hass.states.get(f"{PREFIX}_state_of_charge").state == "unknown"
-    assert hass.states.get(f"{PREFIX}_stored_energy").state == "unknown"
+async def test_empty_battery(hass: HomeAssistant) -> None:
+    """An empty battery reports 0 % and no stored energy."""
+    assert hass.states.get(f"{PREFIX}_state_of_charge").state == "0"
+    assert hass.states.get(f"{PREFIX}_stored_energy").state == "0.0"
 
 
 @pytest.mark.usefixtures("init_integration")
@@ -147,3 +147,12 @@ async def test_stale_pv_entities_removed(
     await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     assert entity_registry.async_get(stale.entity_id) is None
+
+
+@pytest.mark.parametrize(
+    "device_status", [MarstekDeviceStatus(device_ip=HOST, battery_soc=0)]
+)
+@pytest.mark.usefixtures("init_integration")
+async def test_soc_before_es_status(hass: HomeAssistant) -> None:
+    """SOC from ES.GetMode is shown before any ES.GetStatus reply."""
+    assert hass.states.get(f"{PREFIX}_state_of_charge").state == "0"

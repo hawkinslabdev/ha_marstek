@@ -41,6 +41,7 @@ class MarstekClient(MarstekUDPClient):
         """Initialize the client with a per-device store of raw results."""
         super().__init__(*args, **kwargs)
         self.results: dict[str, dict[str, dict[str, Any]]] = {}
+        self._answered: set[str] = set()
 
     @override
     async def send_request(
@@ -51,6 +52,7 @@ class MarstekClient(MarstekUDPClient):
         if isinstance(result := response.get("result"), dict):
             method = json.loads(message)["method"]
             self.results.setdefault(target_ip, {})[method] = result
+            self._answered.add(target_ip)
         return response
 
     @override
@@ -58,9 +60,9 @@ class MarstekClient(MarstekUDPClient):
         self, device_ip: str, **kwargs: Any
     ) -> MarstekDeviceStatus:
         """Fetch status, raising when the device answered none of the requests."""
-        self.results.pop(device_ip, None)
+        self._answered.discard(device_ip)
         status = await super().get_device_status(device_ip, **kwargs)
-        if not self.results.get(device_ip):
+        if device_ip not in self._answered:
             raise TimeoutError(f"No response from {device_ip}")
         return status
 
@@ -256,18 +258,11 @@ def es_number(data: MarstekData, key: str) -> float | int | None:
     return value if _is_number(value) else None
 
 
-def state_of_charge(data: MarstekData) -> float | int | None:
-    """Return the state of charge, or None when the firmware reports no battery."""
-    if data.es.get("bat_cap") == 0:
-        return None
-    return data.status.battery_soc
-
-
 def stored_energy(data: MarstekData) -> float | None:
     """Return stored energy in Wh from total capacity and state of charge."""
     capacity = es_number(data, "bat_cap")
     soc = data.status.battery_soc
-    if not capacity or soc is None:
+    if capacity is None or soc is None:
         return None
     return capacity * soc / 100
 

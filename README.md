@@ -52,11 +52,11 @@ Support depends on the device firmware exposing the Marstek Open API. Other devi
 
 | Entity | Type | Source |
 | --- | --- | --- |
-| State of charge | Sensor (%) | `ES.GetStatus` / `ES.GetMode` `bat_soc`; unknown while `bat_cap` is `0` |
+| State of charge | Sensor (%) | `ES.GetStatus` / `ES.GetMode` `bat_soc` |
 | Battery power, battery status | Sensor (W), enum (`charging`, `discharging`, `idle`) | `ongrid_power` magnitude and sign |
 | Charging power, discharging power | Sensor (W) | `ongrid_power`, split by direction; `0` for the inactive direction |
 | Battery energy in, battery energy out | Sensor (kWh, total increasing) | `ES.GetStatus` `total_grid_input_energy`, `total_grid_output_energy` (AC side) |
-| Stored energy | Sensor (kWh) | `bat_cap` × `bat_soc`; unknown while `bat_cap` is `0` |
+| Stored energy | Sensor (kWh) | `bat_cap` × `bat_soc` |
 | Device mode | Sensor (enum) | `ES.GetMode` `mode` |
 | PV1–PV4 power, voltage, current, state; lifetime PV energy | Sensor | `PV.GetStatus`, `total_pv_energy`; created for Venus A/D only |
 | Operating mode | Select (`Auto`, `AI`, `Passive`, `UPS`) | `ES.SetMode`; `Manual` requires an app schedule and reports as unknown |
@@ -66,8 +66,6 @@ Support depends on the device firmware exposing the Marstek Open API. Other devi
 Passive power and duration are stored in Home Assistant and restored after restart. Changes apply immediately while the device is in passive mode, otherwise on the next switch to `Passive`.
 
 Battery energy in and out map to the **Battery storage** section of the Energy dashboard.
-
-Some firmware (Venus E 3.0 v148) reports `0` for `bat_soc`, `bat_cap`, and every `Bat.GetStatus` field. State of charge and stored energy stay unknown on that firmware.
 
 </details>
 
@@ -87,7 +85,7 @@ Readings that drop to implausible values are replaced with the previous value: e
 
 A repair issue is raised after 10 consecutive polls (5 minutes) without an Open API response, a common result of firmware updates resetting Open API. The issue clears on the next successful poll. Entities report `unavailable` while the device is silent.
 
-**Download diagnostics** on the device page exports device information, normalized status, and the raw results of the last poll. MAC addresses, Wi-Fi name, and `src` identifiers are redacted.
+**Download diagnostics** on the device page exports device information, normalized status, and the latest raw reply per Open API request. MAC addresses, Wi-Fi name, and `src` identifiers are redacted.
 
 </details>
 
