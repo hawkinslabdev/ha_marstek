@@ -4,9 +4,7 @@
 [![Tests](https://img.shields.io/github/actions/workflow/status/hawkinslabdev/ha_marstek/tests.yml?branch=main&label=tests)](https://github.com/hawkinslabdev/ha_marstek/actions/workflows/tests.yml)
 [![License](https://img.shields.io/badge/license-non--commercial-orange.svg)](LICENSE.md)
 
-This fork of the Marstek integration is now an un-official Home Assistant integration first set-up Marstek, but extended with a personal vision on how this should be integrated. 
-
-This Marstek Battery integration communicates with supported Marstek energy storage devices locally over UDP and exposes their status as Home Assistant sensors.
+An unofficial Home Assistant integration, forked from the original Marstek integration, that communicates locally with supported Marstek energy storage devices over UDP using OpenAPI instead of Modbus TCP to expose device status as native sensors.
 
 ## Installation
 
@@ -44,6 +42,9 @@ The integration currently supports these device types. A device may report eithe
 | Venus E 3.0 | Yes | `VNSE3-0`, `VenusE 3.0`, `Venus E 3.0` |
 
 Support depends on the device firmware exposing the Marstek Open API. Other device types are rejected during setup until they are explicitly supported.
+
+> [!TIP]
+> With Marstek releasing new devices, we need your help testing and adding support for unreleased models. If you have an unsupported device, please open an issue or submit a pull request!
 
 ## Available Entities
 
