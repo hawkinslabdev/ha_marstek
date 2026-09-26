@@ -34,7 +34,7 @@ from .const import (
     SCAN_PORTS,
     SUPPORTED_DEVICE_TYPES,
 )
-from .helpers import async_client, async_find_port
+from .helpers import async_client, async_find_port, model_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -154,10 +154,7 @@ class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         device_options: list[SelectOptionDict] = []
         for index, device in enumerate(supported_devices):
-            device_label = (
-                f"{device.device_type} v{device.version} "
-                f"({device.wifi_name or 'No WiFi'}) - {device.ip or 'Unknown IP'}"
-            )
+            device_label = f"Marstek {model_name(device.device_type)} ({device.ip or 'Unknown IP'})"
             if any(option["label"] == device_label for option in device_options):
                 device_label = f"{device_label} #{index + 1}"
 
@@ -251,7 +248,7 @@ class MarstekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
         return self.async_create_entry(
-            title=f"Marstek {device.device_type} v{device.version} ({device.ip})",
+            title=f"Marstek {model_name(device.device_type)} ({device.ip})",
             data={
                 CONF_HOST: device.ip,
                 CONF_PORT: port,

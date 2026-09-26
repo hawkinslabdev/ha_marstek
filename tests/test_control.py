@@ -21,9 +21,9 @@ from homeassistant.exceptions import HomeAssistantError
 
 from .conftest import HOST
 
-SELECT = "select.marstek_vnse3_0_v147_operating_mode"
-POWER = "number.marstek_vnse3_0_v147_passive_power"
-DURATION = "number.marstek_vnse3_0_v147_passive_duration"
+SELECT = "select.marstek_venus_e_3_0_operating_mode"
+POWER = "number.marstek_venus_e_3_0_passive_power"
+DURATION = "number.marstek_venus_e_3_0_passive_duration"
 
 
 async def _select(hass: HomeAssistant, option: str) -> None:

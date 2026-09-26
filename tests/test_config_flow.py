@@ -26,6 +26,7 @@ async def test_manual_default_port(hass: HomeAssistant, udp_client: MagicMock) -
     result = await _manual_flow(hass, {CONF_HOST: HOST})
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_PORT] == 30000
+    assert result["title"] == f"Marstek Venus E 3.0 ({HOST})"
 
 
 async def test_manual_finds_custom_port(

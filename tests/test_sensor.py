@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 
 from .conftest import HOST
 
-PREFIX = "sensor.marstek_vnse3_0_v147"
+PREFIX = "sensor.marstek_venus_e_3_0"
 
 
 @pytest.mark.parametrize(

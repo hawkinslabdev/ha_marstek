@@ -14,7 +14,7 @@ from homeassistant.components import network
 from homeassistant.core import HomeAssistant
 from homeassistant.util.hass_dict import HassKey
 
-from .const import DOMAIN
+from .const import DOMAIN, SUPPORTED_DEVICE_TYPES
 
 if TYPE_CHECKING:
     from .coordinator import MarstekData
@@ -258,3 +258,8 @@ def stored_energy(data: MarstekData) -> float | None:
     if capacity is None or soc is None:
         return None
     return capacity * soc / 100
+
+
+def model_name(device_type: str) -> str:
+    """Return the marketing model name for a reported device type."""
+    return SUPPORTED_DEVICE_TYPES.get(device_type, device_type)

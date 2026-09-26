@@ -15,8 +15,8 @@ Installation runs through [HACS](https://hacs.xyz) as a custom repository. The b
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=hawkinslabdev&repository=ha_marstek&category=integration)
 
 1. Select the button above, or open **HACS** > **⋮** > **Custom repositories** and add `https://github.com/hawkinslabdev/ha_marstek` with type **Integration**.
-2. Download **Marstek** and restart Home Assistant.
-3. [Add the Marstek integration](https://my.home-assistant.io/redirect/config_flow_start/?domain=marstek) or open **Settings** > **Devices & services** > **Add integration** > **Marstek**.
+2. Download **Marstek (unofficial)** and restart Home Assistant.
+3. [Add the Marstek integration](https://my.home-assistant.io/redirect/config_flow_start/?domain=marstek) or open **Settings** > **Devices & services** > **Add integration** > **Marstek (unofficial)**.
 4. Select a setup method:
    - **Search for devices on the local network**: UDP broadcast discovery.
    - **Enter device IP address**: manual setup.

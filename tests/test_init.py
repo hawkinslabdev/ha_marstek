@@ -38,7 +38,7 @@ async def test_unreachable_repair(
         await _poll(hass, freezer)
     assert issue_registry.async_get_issue(DOMAIN, issue_id) is None
     assert (
-        hass.states.get("sensor.marstek_vnse3_0_v147_battery_level").state
+        hass.states.get("sensor.marstek_venus_e_3_0_battery_level").state
         == "unavailable"
     )
 
