@@ -1,7 +1,7 @@
 # Marstek for Home Assistant
 
-[![Tests](https://img.shields.io/github/actions/workflow/status/hawkinslabdev/ha_marstek/tests.yml?branch=main&label=tests)](https://github.com/hawkinslabdev/ha_marstek/actions/workflows/tests.yml)
 [![HACS](https://img.shields.io/badge/HACS-Install_this_repository-41BDF5?logo=homeassistantcommunitystore&logoColor=white)](https://my.home-assistant.io/redirect/hacs_repository/?owner=hawkinslabdev&repository=ha_marstek&category=integration)
+[![Tests](https://img.shields.io/github/actions/workflow/status/hawkinslabdev/ha_marstek/tests.yml?branch=main&label=tests)](https://github.com/hawkinslabdev/ha_marstek/actions/workflows/tests.yml)
 [![License](https://img.shields.io/badge/license-non--commercial-orange.svg)](LICENSE.md)
 
 This fork of the Marstek integration is now an un-official Home Assistant integration first set-up Marstek, but extended with a personal vision on how this should be integrated. 
