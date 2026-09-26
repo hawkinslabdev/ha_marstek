@@ -22,3 +22,5 @@ async def test_diagnostics(
     assert result["raw"]["ES.GetStatus"]["wifi_mac"] == "**REDACTED**"
     assert result["device_info"]["wifi_mac"] == "**REDACTED**"
     assert result["device_info"]["device_type"] == "VNSE3-0"
+    assert result["domain"] == "marstek_hacs"
+    assert result["last_update"] is not None

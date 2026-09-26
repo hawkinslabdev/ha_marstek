@@ -24,6 +24,8 @@ async def async_get_config_entry_diagnostics(
             "device_info": asdict(coordinator.device_info),
             "status": asdict(coordinator.data.status),
             "raw": coordinator.udp_client.results.get(coordinator.device_ip, {}),
+            "domain": entry.domain,
+            "last_update": coordinator.last_update,
             "failed_polls": coordinator.failed_polls,
             "error_state": coordinator.error_state,
             "open_api_revision": OPEN_API_REVISION,

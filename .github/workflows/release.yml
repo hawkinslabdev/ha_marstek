@@ -37,10 +37,10 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
       - name: Set manifest version
         run: |
-          jq --arg v "$VERSION" '.version = $v' custom_components/marstek/manifest.json > manifest.json
-          mv manifest.json custom_components/marstek/manifest.json
+          jq --arg v "$VERSION" '.version = $v' custom_components/marstek_hacs/manifest.json > manifest.json
+          mv manifest.json custom_components/marstek_hacs/manifest.json
       - name: Package integration
-        working-directory: custom_components/marstek
+        working-directory: custom_components/marstek_hacs
         run: zip -r "$GITHUB_WORKSPACE/marstek.zip" . -x '__pycache__/*'
       - name: Tag and publish release
         run: gh release create "v$VERSION" marstek.zip --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes

@@ -19,8 +19,8 @@ from homeassistant.helpers import (
 )
 
 from .conftest import HOST
-from custom_components.marstek.const import DOMAIN, UNREACHABLE_POLLS
-from custom_components.marstek.coordinator import SCAN_INTERVAL
+from custom_components.marstek_hacs.const import DOMAIN, UNREACHABLE_POLLS
+from custom_components.marstek_hacs.coordinator import SCAN_INTERVAL
 
 ERROR_STATE = "sensor.marstek_venus_e_3_0_error_state"
 

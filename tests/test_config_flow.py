@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 from .conftest import HOST
-from custom_components.marstek.const import DOMAIN
+from custom_components.marstek_hacs.const import DOMAIN
 
 
 async def _manual_flow(hass: HomeAssistant, user_input: dict) -> dict:
@@ -36,7 +36,7 @@ async def test_manual_finds_custom_port(
     device_info = udp_client.get_device_info.return_value
     udp_client.get_device_info.side_effect = [TimeoutError, device_info]
     with patch(
-        "custom_components.marstek.config_flow.async_find_port", return_value=50123
+        "custom_components.marstek_hacs.config_flow.async_find_port", return_value=50123
     ):
         result = await _manual_flow(hass, {CONF_HOST: HOST})
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -45,7 +45,7 @@ async def test_manual_finds_custom_port(
 
 async def test_manual_explicit_port(hass: HomeAssistant, udp_client: MagicMock) -> None:
     """Manual setup with an explicit port skips the scan."""
-    with patch("custom_components.marstek.config_flow.async_find_port") as find:
+    with patch("custom_components.marstek_hacs.config_flow.async_find_port") as find:
         result = await _manual_flow(hass, {CONF_HOST: HOST, CONF_PORT: 50200})
     find.assert_not_called()
     assert result["data"][CONF_PORT] == 50200
@@ -57,7 +57,7 @@ async def test_manual_port_not_found(
     """Manual setup reports a connection error when no port answers."""
     udp_client.get_device_info.side_effect = TimeoutError
     with patch(
-        "custom_components.marstek.config_flow.async_find_port", return_value=None
+        "custom_components.marstek_hacs.config_flow.async_find_port", return_value=None
     ):
         result = await _manual_flow(hass, {CONF_HOST: HOST})
     assert result["errors"] == {"base": "cannot_connect"}

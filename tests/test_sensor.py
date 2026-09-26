@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
 from .conftest import HOST
-from custom_components.marstek.const import DOMAIN
+from custom_components.marstek_hacs.const import DOMAIN
 
 PREFIX = "sensor.marstek_venus_e_3_0"
 

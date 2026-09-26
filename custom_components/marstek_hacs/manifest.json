@@ -1,5 +1,5 @@
 {
-  "domain": "marstek",
+  "domain": "marstek_hacs",
   "name": "Marstek (unofficial)",
   "codeowners": ["@hawkinslabdev"],
   "config_flow": true,

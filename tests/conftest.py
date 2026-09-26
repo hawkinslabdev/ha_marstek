@@ -11,7 +11,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 
-from custom_components.marstek.const import DOMAIN
+from custom_components.marstek_hacs.const import DOMAIN
 
 HOST = "192.168.1.50"
 
@@ -58,9 +58,11 @@ def udp_client(
     client.results = {HOST: {"ES.GetStatus": es_status}}
     client.async_set_mode = AsyncMock(return_value=True)
     with (
-        patch("custom_components.marstek.helpers.MarstekClient", return_value=client),
         patch(
-            "custom_components.marstek.helpers.network.async_get_ipv4_broadcast_addresses",
+            "custom_components.marstek_hacs.helpers.MarstekClient", return_value=client
+        ),
+        patch(
+            "custom_components.marstek_hacs.helpers.network.async_get_ipv4_broadcast_addresses",
             AsyncMock(return_value=[]),
         ),
     ):

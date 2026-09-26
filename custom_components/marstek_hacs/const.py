@@ -2,7 +2,7 @@
 
 from typing import Final
 
-DOMAIN: Final = "marstek"
+DOMAIN: Final = "marstek_hacs"
 
 DEFAULT_PORT: Final = 30000
 SCAN_PORTS: Final = range(49152, 65536)

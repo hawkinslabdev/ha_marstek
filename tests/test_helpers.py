@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, patch
 from aiomarstek import MarstekDeviceStatus, MarstekUDPClient, command_builder
 import pytest
 
-from custom_components.marstek.coordinator import MarstekData
-from custom_components.marstek.helpers import (
+from custom_components.marstek_hacs.coordinator import MarstekData
+from custom_components.marstek_hacs.helpers import (
     MarstekClient,
     async_find_port,
     hold_glitches,

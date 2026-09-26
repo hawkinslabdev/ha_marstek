@@ -135,7 +135,7 @@
         "name": "PV2 state",
         "state": {
           "standby": "[%key:common::state::standby%]",
-          "working": "[%key:component::marstek::entity::sensor::pv1_state::state::working%]"
+          "working": "[%key:component::marstek_hacs::entity::sensor::pv1_state::state::working%]"
         }
       },
       "pv2_voltage": {
@@ -151,7 +151,7 @@
         "name": "PV3 state",
         "state": {
           "standby": "[%key:common::state::standby%]",
-          "working": "[%key:component::marstek::entity::sensor::pv1_state::state::working%]"
+          "working": "[%key:component::marstek_hacs::entity::sensor::pv1_state::state::working%]"
         }
       },
       "pv3_voltage": {
@@ -167,7 +167,7 @@
         "name": "PV4 state",
         "state": {
           "standby": "[%key:common::state::standby%]",
-          "working": "[%key:component::marstek::entity::sensor::pv1_state::state::working%]"
+          "working": "[%key:component::marstek_hacs::entity::sensor::pv1_state::state::working%]"
         }
       },
       "pv4_voltage": {

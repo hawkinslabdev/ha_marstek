@@ -2,7 +2,7 @@
 
 import asyncio
 from dataclasses import dataclass, field, replace
-from datetime import timedelta
+from datetime import datetime, timedelta
 import logging
 from typing import Any, override
 
@@ -14,6 +14,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, HomeAssistantError
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .const import (
     DEFAULT_PORT,
@@ -63,6 +64,7 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
     passive_duration: int = 3600
     failed_polls: int = 0
     error_state: str = "none"
+    last_update: datetime | None = None
 
     def __init__(
         self,
@@ -178,6 +180,7 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
             ir.async_delete_issue(self.hass, DOMAIN, self.issue_id)
         self.failed_polls = 0
         self.error_state = "none"
+        self.last_update = dt_util.utcnow()
         es = self.udp_client.results.get(self.device_ip, {}).get("ES.GetStatus", {})
         return hold_glitches(previous, MarstekData(status=status, es=es))
 
