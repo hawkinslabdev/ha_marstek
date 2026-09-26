@@ -5,13 +5,16 @@ from collections.abc import AsyncIterator, Iterable
 from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass, replace
 import json
+import re
 import socket
 from typing import TYPE_CHECKING, Any, override
 
 from aiomarstek import MarstekDeviceStatus, MarstekUDPClient, command_builder
 
 from homeassistant.components import network
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, split_entity_id
+from homeassistant.helpers import entity_registry as er
+from homeassistant.util import slugify
 from homeassistant.util.hass_dict import HassKey
 
 from .const import DOMAIN, SUPPORTED_DEVICE_TYPES
@@ -270,3 +273,34 @@ def stored_energy(data: MarstekData) -> float | None:
 def model_name(device_type: str) -> str:
     """Return the marketing model name for a reported device type."""
     return SUPPORTED_DEVICE_TYPES.get(device_type, device_type)
+
+
+def error_state(err: Exception) -> str:
+    """Return the error state for a failed poll."""
+    if isinstance(err, TimeoutError):
+        return "no_response"
+    if isinstance(err, OSError):
+        return "network_error"
+    return "invalid_data"
+
+
+def error_reason(err: Exception) -> str:
+    """Return a log-friendly reason for a failed poll."""
+    reason = error_state(err).replace("_", " ")
+    return f"{reason} ({err})" if str(err) else reason
+
+
+def async_migrate_entity_ids(
+    hass: HomeAssistant, entry_id: str, device_type: str
+) -> None:
+    """Rename entity IDs that carry the raw device type and firmware version."""
+    registry = er.async_get(hass)
+    legacy = re.compile(rf"^marstek_{re.escape(slugify(device_type))}_v[^_]+_")
+    prefix = f"marstek_{slugify(model_name(device_type))}_"
+    for entity in er.async_entries_for_config_entry(registry, entry_id):
+        domain, object_id = split_entity_id(entity.entity_id)
+        new_entity_id = f"{domain}.{legacy.sub(prefix, object_id, count=1)}"
+        if new_entity_id != entity.entity_id and not registry.async_is_registered(
+            new_entity_id
+        ):
+            registry.async_update_entity(entity.entity_id, new_entity_id=new_entity_id)

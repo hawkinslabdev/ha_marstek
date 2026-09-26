@@ -7,6 +7,7 @@ DOMAIN: Final = "marstek"
 DEFAULT_PORT: Final = 30000
 SCAN_PORTS: Final = range(49152, 65536)
 UNREACHABLE_POLLS: Final = 10
+OPEN_API_REVISION: Final = "3.1"
 
 CONF_BLE_MAC: Final = "ble_mac"
 CONF_DEVICE_TYPE: Final = "device_type"
@@ -31,3 +32,4 @@ DEVICE_MODE_OPTIONS: Final = ("auto", "ai", "manual", "passive", "ups")
 SELECTABLE_MODES: Final = ("auto", "ai", "passive", "ups")
 BATTERY_STATUS_OPTIONS: Final = ("discharging", "charging", "idle")
 PV_MODELS: Final = ("Venus A", "Venus D")
+ERROR_STATE_OPTIONS: Final = ("none", "no_response", "network_error", "invalid_data")

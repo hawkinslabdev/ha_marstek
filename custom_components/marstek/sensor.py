@@ -14,6 +14,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import (
     PERCENTAGE,
+    EntityCategory,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
@@ -28,6 +29,7 @@ from .const import (
     BATTERY_STATUS_OPTIONS,
     DEVICE_MODE_OPTIONS,
     DOMAIN,
+    ERROR_STATE_OPTIONS,
     PV_MODELS,
     PV_STATE_OPTIONS,
 )
@@ -209,7 +211,10 @@ async def async_setup_entry(
             ):
                 registry.async_remove(entity_id)
 
-    sensors = [MarstekSensor(coordinator, description) for description in descriptions]
+    sensors: list[SensorEntity] = [
+        MarstekSensor(coordinator, description) for description in descriptions
+    ]
+    sensors.append(MarstekErrorSensor(coordinator, ERROR_STATE))
 
     _LOGGER.debug("Device %s sensors set up, total %d", device_ip, len(sensors))
     async_add_entities(sensors)
@@ -227,3 +232,28 @@ class MarstekSensor(MarstekEntity, SensorEntity):
         if value_fn := self.entity_description.value_fn:
             return value_fn(self.coordinator.data)
         return self.coordinator.data.status.get_value(self.entity_description.key)
+
+
+ERROR_STATE = SensorEntityDescription(
+    key="error_state",
+    translation_key="error_state",
+    device_class=SensorDeviceClass.ENUM,
+    entity_category=EntityCategory.DIAGNOSTIC,
+    options=list(ERROR_STATE_OPTIONS),
+)
+
+
+class MarstekErrorSensor(MarstekEntity, SensorEntity):
+    """Outcome of the latest poll; available while the device is silent."""
+
+    @property
+    @override
+    def available(self) -> bool:
+        """Return True so the error stays visible during outages."""
+        return True
+
+    @property
+    @override
+    def native_value(self) -> str:
+        """Return the latest poll outcome."""
+        return self.coordinator.error_state

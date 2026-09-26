@@ -62,6 +62,7 @@ Support depends on the device firmware exposing the Marstek Open API. Other devi
 | Operating mode | Select (`Auto`, `AI`, `Passive`, `UPS`) | `ES.SetMode`; `Manual` requires an app schedule and reports as unknown |
 | Passive power | Number (W, −2500 to 2500) | `passive_cfg.power`; negative charges, positive discharges |
 | Passive duration | Number (s, 60 to 86400) | `passive_cfg.cd_time` |
+| Error state | Sensor (enum, diagnostic) | Outcome of the latest poll |
 
 Passive power and duration are stored in Home Assistant and restored after restart. Changes apply immediately while the device is in passive mode, otherwise on the next switch to `Passive`.
 
@@ -85,7 +86,9 @@ Readings that drop to implausible values are replaced with the previous value: e
 
 A repair issue is raised after 10 consecutive polls (5 minutes) without an Open API response, a common result of firmware updates resetting Open API. The issue clears on the next successful poll. Entities report `unavailable` while the device is silent.
 
-**Download diagnostics** on the device page exports device information, normalized status, and the latest raw reply per Open API request. MAC addresses, Wi-Fi name, and `src` identifiers are redacted.
+The **Error state** diagnostic sensor reports the outcome of the latest poll (`none`, `no_response`, `network_error`, `invalid_data`) and stays available during outages. Log entries identify the device by `<ip>:<port>`; setup logs the model, reported device type, firmware version, and Open API revision (3.1).
+
+**Download diagnostics** on the device page exports device information, normalized status, error state, Open API revision, and the latest raw reply per Open API request. MAC addresses, Wi-Fi name, and `src` identifiers are redacted.
 
 </details>
 

@@ -14,8 +14,21 @@ from homeassistant.exceptions import ConfigEntryError, HomeAssistantError
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DEFAULT_PORT, DOMAIN, SUPPORTED_DEVICE_TYPES, UNREACHABLE_POLLS
-from .helpers import MarstekClient, hold_glitches, mode_config
+from .const import (
+    DEFAULT_PORT,
+    DOMAIN,
+    OPEN_API_REVISION,
+    SUPPORTED_DEVICE_TYPES,
+    UNREACHABLE_POLLS,
+)
+from .helpers import (
+    MarstekClient,
+    error_reason,
+    error_state,
+    hold_glitches,
+    mode_config,
+    model_name,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,6 +61,7 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
     passive_power: int = 0
     passive_duration: int = 3600
     failed_polls: int = 0
+    error_state: str = "none"
 
     def __init__(
         self,
@@ -63,7 +77,7 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
             hass,
             _LOGGER,
             config_entry=config_entry,
-            name=f"Marstek {self.device_ip}",
+            name=f"Marstek {self.device_ip}:{self.port}",
             update_interval=SCAN_INTERVAL,
         )
         _LOGGER.debug(
@@ -99,6 +113,15 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
             )
 
         self.device_info = device_info
+        _LOGGER.info(
+            "Marstek %s (%s) firmware v%s at %s:%s, Open API rev %s",
+            model_name(device_info.device_type),
+            device_info.device_type,
+            device_info.version,
+            self.device_ip,
+            self.port,
+            OPEN_API_REVISION,
+        )
 
     @property
     def issue_id(self) -> str:
@@ -126,6 +149,9 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
             )
         except (TimeoutError, OSError, TypeError) as err:
             self.failed_polls += 1
+            if (state := error_state(err)) != self.error_state:
+                self.error_state = state
+                self.async_update_listeners()
             if self.failed_polls == UNREACHABLE_POLLS:
                 ir.async_create_issue(
                     self.hass,
@@ -139,12 +165,16 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
             raise UpdateFailed(
                 translation_domain=DOMAIN,
                 translation_key="device_update_failed",
-                translation_placeholders={"host": self.device_ip},
+                translation_placeholders={
+                    "host": f"{self.device_ip}:{self.port}",
+                    "reason": error_reason(err),
+                },
             ) from err
 
         if self.failed_polls >= UNREACHABLE_POLLS:
             ir.async_delete_issue(self.hass, DOMAIN, self.issue_id)
         self.failed_polls = 0
+        self.error_state = "none"
         es = self.udp_client.results.get(self.device_ip, {}).get("ES.GetStatus", {})
         return hold_glitches(previous, MarstekData(status=status, es=es))
 

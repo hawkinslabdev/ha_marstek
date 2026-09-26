@@ -100,6 +100,15 @@
           "ups": "UPS"
         }
       },
+      "error_state": {
+        "name": "Error state",
+        "state": {
+          "invalid_data": "Invalid data",
+          "network_error": "Network error",
+          "no_response": "No response",
+          "none": "No error"
+        }
+      },
       "pv1_current": {
         "name": "PV1 current"
       },
@@ -177,7 +186,7 @@
       "message": "Unable to connect to the Marstek device at {host}."
     },
     "device_update_failed": {
-      "message": "Unable to update the Marstek device at {host}."
+      "message": "Unable to update the Marstek device at {host}: {reason}."
     },
     "invalid_device_data": {
       "message": "The Marstek device at {host} returned invalid data."

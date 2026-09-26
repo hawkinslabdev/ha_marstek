@@ -7,7 +7,7 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_MAC
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_BLE_MAC, CONF_WIFI_MAC, CONF_WIFI_NAME
+from .const import CONF_BLE_MAC, CONF_WIFI_MAC, CONF_WIFI_NAME, OPEN_API_REVISION
 from .coordinator import MarstekConfigEntry
 
 TO_REDACT = {CONF_MAC, CONF_BLE_MAC, CONF_WIFI_MAC, CONF_WIFI_NAME, "src"}
@@ -25,6 +25,8 @@ async def async_get_config_entry_diagnostics(
             "status": asdict(coordinator.data.status),
             "raw": coordinator.udp_client.results.get(coordinator.device_ip, {}),
             "failed_polls": coordinator.failed_polls,
+            "error_state": coordinator.error_state,
+            "open_api_revision": OPEN_API_REVISION,
         },
         TO_REDACT,
     )

@@ -14,7 +14,11 @@ from .coordinator import (
     MarstekDataUpdateCoordinator,
     MarstekRuntimeData,
 )
-from .helpers import async_acquire_client, async_release_client
+from .helpers import (
+    async_acquire_client,
+    async_migrate_entity_ids,
+    async_release_client,
+)
 
 PLATFORMS: list[Platform] = [Platform.NUMBER, Platform.SELECT, Platform.SENSOR]
 
@@ -39,6 +43,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MarstekConfigEntry) -> b
         object.__delattr__(entry, "runtime_data")
         raise
 
+    async_migrate_entity_ids(hass, entry.entry_id, coordinator.device_info.device_type)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
