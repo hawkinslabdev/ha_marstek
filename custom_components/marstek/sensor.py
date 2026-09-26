@@ -1,5 +1,6 @@
 """Sensor platform for Marstek devices."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 import logging
 from typing import override
@@ -22,15 +23,20 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
 from .const import BATTERY_STATUS_OPTIONS, DEVICE_MODE_OPTIONS, PV_STATE_OPTIONS
-from .coordinator import MarstekConfigEntry
+from .coordinator import MarstekConfigEntry, MarstekData
 from .entity import MarstekEntity
+from .helpers import battery_flow_power, es_number, stored_energy
 
 _LOGGER = logging.getLogger(__name__)
+
+PARALLEL_UPDATES = 0
 
 
 @dataclass(frozen=True, kw_only=True)
 class MarstekSensorEntityDescription(SensorEntityDescription):
     """Describe a Marstek sensor entity."""
+
+    value_fn: Callable[[MarstekData], StateType] | None = None
 
 
 def _pv_sensor_descriptions() -> tuple[MarstekSensorEntityDescription, ...]:
@@ -96,6 +102,49 @@ SENSOR_DESCRIPTIONS: tuple[MarstekSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     MarstekSensorEntityDescription(
+        key="battery_charge_power",
+        translation_key="battery_charge_power",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: battery_flow_power(data.status, "charging"),
+    ),
+    MarstekSensorEntityDescription(
+        key="battery_discharge_power",
+        translation_key="battery_discharge_power",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: battery_flow_power(data.status, "selling"),
+    ),
+    MarstekSensorEntityDescription(
+        key="battery_energy_in",
+        translation_key="battery_energy_in",
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: es_number(data, "total_grid_input_energy"),
+    ),
+    MarstekSensorEntityDescription(
+        key="battery_energy_out",
+        translation_key="battery_energy_out",
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: es_number(data, "total_grid_output_energy"),
+    ),
+    MarstekSensorEntityDescription(
+        key="stored_energy",
+        translation_key="stored_energy",
+        device_class=SensorDeviceClass.ENERGY_STORAGE,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=stored_energy,
+    ),
+    MarstekSensorEntityDescription(
         key="total_pv_energy",
         translation_key="total_pv_energy",
         device_class=SensorDeviceClass.ENERGY,
@@ -147,4 +196,6 @@ class MarstekSensor(MarstekEntity, SensorEntity):
     @override
     def native_value(self) -> StateType | None:
         """Return the state of the sensor."""
-        return self.coordinator.data.get_value(self.entity_description.key)
+        if value_fn := self.entity_description.value_fn:
+            return value_fn(self.coordinator.data)
+        return self.coordinator.data.status.get_value(self.entity_description.key)

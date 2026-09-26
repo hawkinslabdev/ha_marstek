@@ -1,32 +1,33 @@
 """Data update coordinator for Marstek devices."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from datetime import timedelta
 import logging
-from typing import override
+from typing import Any, override
 
-from aiomarstek import MarstekDeviceInfo, MarstekDeviceStatus, MarstekUDPClient
+from aiomarstek import MarstekDeviceInfo, MarstekDeviceStatus
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST
+from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryError
+from homeassistant.exceptions import ConfigEntryError, HomeAssistantError
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.util.hass_dict import HassKey
 
-from .const import DOMAIN, SUPPORTED_DEVICE_TYPES
+from .const import DEFAULT_PORT, DOMAIN, SUPPORTED_DEVICE_TYPES, UNREACHABLE_POLLS
+from .helpers import MarstekClient, hold_glitches, mode_config
 
 _LOGGER = logging.getLogger(__name__)
 
 SCAN_INTERVAL = timedelta(seconds=30)
 
 
-@dataclass(slots=True, kw_only=True)
-class MarstekSharedData:
-    """Shared runtime data for all Marstek config entries."""
+@dataclass(frozen=True, slots=True, kw_only=True)
+class MarstekData:
+    """Normalized status plus the raw ES.GetStatus result."""
 
-    udp_client: MarstekUDPClient
-    entry_count: int = 0
+    status: MarstekDeviceStatus
+    es: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True, kw_only=True)
@@ -38,23 +39,25 @@ class MarstekRuntimeData:
 
 type MarstekConfigEntry = ConfigEntry[MarstekRuntimeData]
 
-MARSTEK_SHARED_DATA: HassKey[MarstekSharedData] = HassKey(DOMAIN)
 
-
-class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekDeviceStatus]):
+class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
     """Per-device data update coordinator."""
 
     config_entry: MarstekConfigEntry
     device_info: MarstekDeviceInfo
+    passive_power: int = 0
+    passive_duration: int = 3600
+    failed_polls: int = 0
 
     def __init__(
         self,
         hass: HomeAssistant,
         config_entry: MarstekConfigEntry,
-        udp_client: MarstekUDPClient,
+        udp_client: MarstekClient,
     ) -> None:
         """Initialize the coordinator."""
         self.device_ip = config_entry.data[CONF_HOST]
+        self.port = config_entry.data.get(CONF_PORT, DEFAULT_PORT)
         self.udp_client = udp_client
         super().__init__(
             hass,
@@ -97,28 +100,71 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekDeviceStatus]):
 
         self.device_info = device_info
 
+    @property
+    def issue_id(self) -> str:
+        """Return the repair issue id for an unreachable Open API."""
+        return f"open_api_unreachable_{self.config_entry.entry_id}"
+
     @override
-    async def _async_update_data(self) -> MarstekDeviceStatus:
+    async def _async_update_data(self) -> MarstekData:
         """Fetch device data from the Marstek client library."""
         _LOGGER.debug("Start polling device: %s", self.device_ip)
-        current_data = self.data
+        previous = self.data
 
         if self.udp_client.is_polling_paused(self.device_ip):
             _LOGGER.debug(
                 "Polling paused for device: %s, skipping update", self.device_ip
             )
-            return current_data or MarstekDeviceStatus(device_ip=self.device_ip)
+            return previous or MarstekData(
+                status=MarstekDeviceStatus(device_ip=self.device_ip)
+            )
 
         try:
-            current_data = await self.udp_client.get_device_status(
+            status = await self.udp_client.get_device_status(
                 self.device_ip,
-                previous_data=current_data,
+                previous_data=previous.status if previous else None,
             )
         except (TimeoutError, OSError, TypeError) as err:
+            self.failed_polls += 1
+            if self.failed_polls == UNREACHABLE_POLLS:
+                ir.async_create_issue(
+                    self.hass,
+                    DOMAIN,
+                    self.issue_id,
+                    is_fixable=False,
+                    severity=ir.IssueSeverity.WARNING,
+                    translation_key="open_api_unreachable",
+                    translation_placeholders={"host": self.device_ip},
+                )
             raise UpdateFailed(
                 translation_domain=DOMAIN,
                 translation_key="device_update_failed",
                 translation_placeholders={"host": self.device_ip},
             ) from err
 
-        return current_data
+        if self.failed_polls >= UNREACHABLE_POLLS:
+            ir.async_delete_issue(self.hass, DOMAIN, self.issue_id)
+        self.failed_polls = 0
+        es = self.udp_client.results.get(self.device_ip, {}).get("ES.GetStatus", {})
+        return hold_glitches(previous, MarstekData(status=status, es=es))
+
+    async def async_set_mode(self, mode: str) -> None:
+        """Switch the operating mode, applying passive settings when relevant."""
+        config = mode_config(mode, self.passive_power, self.passive_duration)
+        try:
+            accepted = await self.udp_client.async_set_mode(self.device_ip, config)
+        except (TimeoutError, OSError) as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="set_mode_failed",
+                translation_placeholders={"host": self.device_ip},
+            ) from err
+        if not accepted:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="set_mode_rejected",
+                translation_placeholders={"mode": mode},
+            )
+        self.async_set_updated_data(
+            replace(self.data, status=replace(self.data.status, device_mode=mode))
+        )

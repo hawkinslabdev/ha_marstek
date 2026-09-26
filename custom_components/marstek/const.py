@@ -4,6 +4,10 @@ from typing import Final
 
 DOMAIN: Final = "marstek"
 
+DEFAULT_PORT: Final = 30000
+SCAN_PORTS: Final = range(49152, 65536)
+UNREACHABLE_POLLS: Final = 10
+
 CONF_BLE_MAC: Final = "ble_mac"
 CONF_DEVICE_TYPE: Final = "device_type"
 CONF_VERSION: Final = "version"
@@ -26,4 +30,5 @@ SUPPORTED_DEVICE_TYPES: Final[frozenset[str]] = frozenset(
 
 PV_STATE_OPTIONS: Final = ("standby", "working")
 DEVICE_MODE_OPTIONS: Final = ("auto", "ai", "manual", "passive", "ups")
+SELECTABLE_MODES: Final = ("auto", "ai", "passive", "ups")
 BATTERY_STATUS_OPTIONS: Final = ("selling", "charging", "idle")
