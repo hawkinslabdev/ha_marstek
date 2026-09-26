@@ -25,7 +25,7 @@ def test_request_id_wraps_within_16_bits() -> None:
     assert json.loads(command_builder.discover())["id"] == 1
 
 
-@pytest.mark.enable_socket
+@pytest.mark.usefixtures("socket_enabled")
 @pytest.mark.parametrize(
     ("reply", "expected"),
     [
