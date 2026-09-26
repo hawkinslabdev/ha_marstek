@@ -6,6 +6,7 @@ import logging
 from typing import override
 
 from homeassistant.components.sensor import (
+    DOMAIN as SENSOR_DOMAIN,
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
@@ -19,13 +20,27 @@ from homeassistant.const import (
     UnitOfPower,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from .const import BATTERY_STATUS_OPTIONS, DEVICE_MODE_OPTIONS, PV_STATE_OPTIONS
+from .const import (
+    BATTERY_STATUS_OPTIONS,
+    DEVICE_MODE_OPTIONS,
+    DOMAIN,
+    PV_MODELS,
+    PV_STATE_OPTIONS,
+)
 from .coordinator import MarstekConfigEntry, MarstekData
 from .entity import MarstekEntity
-from .helpers import battery_flow_power, es_number, stored_energy
+from .helpers import (
+    battery_flow_power,
+    battery_status,
+    es_number,
+    model_name,
+    state_of_charge,
+    stored_energy,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -93,6 +108,7 @@ SENSOR_DESCRIPTIONS: tuple[MarstekSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.BATTERY,
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
+        value_fn=state_of_charge,
     ),
     MarstekSensorEntityDescription(
         key="battery_power",
@@ -115,7 +131,7 @@ SENSOR_DESCRIPTIONS: tuple[MarstekSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: battery_flow_power(data.status, "selling"),
+        value_fn=lambda data: battery_flow_power(data.status, "discharging"),
     ),
     MarstekSensorEntityDescription(
         key="battery_energy_in",
@@ -145,13 +161,6 @@ SENSOR_DESCRIPTIONS: tuple[MarstekSensorEntityDescription, ...] = (
         value_fn=stored_energy,
     ),
     MarstekSensorEntityDescription(
-        key="total_pv_energy",
-        translation_key="total_pv_energy",
-        device_class=SensorDeviceClass.ENERGY,
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        state_class=SensorStateClass.TOTAL_INCREASING,
-    ),
-    MarstekSensorEntityDescription(
         key="device_mode",
         translation_key="device_mode",
         device_class=SensorDeviceClass.ENUM,
@@ -164,6 +173,17 @@ SENSOR_DESCRIPTIONS: tuple[MarstekSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENUM,
         icon="mdi:battery",
         options=list(BATTERY_STATUS_OPTIONS),
+        value_fn=lambda data: battery_status(data.status),
+    ),
+)
+
+PV_SENSOR_DESCRIPTIONS: tuple[MarstekSensorEntityDescription, ...] = (
+    MarstekSensorEntityDescription(
+        key="total_pv_energy",
+        translation_key="total_pv_energy",
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     *_pv_sensor_descriptions(),
 )
@@ -179,9 +199,19 @@ async def async_setup_entry(
     device_ip = coordinator.device_ip
     _LOGGER.debug("Setting up Marstek sensors: %s", device_ip)
 
-    sensors = [
-        MarstekSensor(coordinator, description) for description in SENSOR_DESCRIPTIONS
-    ]
+    descriptions = SENSOR_DESCRIPTIONS
+    if model_name(coordinator.device_info.device_type) in PV_MODELS:
+        descriptions += PV_SENSOR_DESCRIPTIONS
+    else:
+        registry = er.async_get(hass)
+        for description in PV_SENSOR_DESCRIPTIONS:
+            unique_id = f"{coordinator.device_info.stable_id}_{description.key}"
+            if entity_id := registry.async_get_entity_id(
+                SENSOR_DOMAIN, DOMAIN, unique_id
+            ):
+                registry.async_remove(entity_id)
+
+    sensors = [MarstekSensor(coordinator, description) for description in descriptions]
 
     _LOGGER.debug("Device %s sensors set up, total %d", device_ip, len(sensors))
     async_add_entities(sensors)

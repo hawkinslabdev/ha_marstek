@@ -65,10 +65,10 @@
     },
     "sensor": {
       "battery_charge_power": {
-        "name": "Battery charge power"
+        "name": "Charging power"
       },
       "battery_discharge_power": {
-        "name": "Battery discharge power"
+        "name": "Discharging power"
       },
       "battery_energy_in": {
         "name": "Battery energy in"
@@ -80,14 +80,14 @@
         "name": "Battery power"
       },
       "battery_soc": {
-        "name": "Battery level"
+        "name": "State of charge"
       },
       "battery_status": {
         "name": "Battery status",
         "state": {
           "charging": "[%key:common::state::charging%]",
-          "idle": "[%key:common::state::idle%]",
-          "selling": "Selling"
+          "discharging": "[%key:common::state::discharging%]",
+          "idle": "[%key:common::state::idle%]"
         }
       },
       "device_mode": {

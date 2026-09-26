@@ -31,7 +31,6 @@ def _next_request_id() -> int:
     return command_builder._request_id
 
 
-# ponytail: patches aiomarstek 0.1.7 internals (16-bit request id, fixed local port 30000); drop when upstream fixes both
 command_builder.get_next_request_id = _next_request_id
 
 
@@ -193,13 +192,20 @@ async def async_find_port(
     return None
 
 
+def battery_status(status: MarstekDeviceStatus) -> str | None:
+    """Return the battery flow direction, naming discharge as discharging."""
+    return (
+        "discharging" if status.battery_status == "selling" else status.battery_status
+    )
+
+
 def battery_flow_power(
     status: MarstekDeviceStatus, direction: str
 ) -> float | int | None:
     """Return battery power for one flow direction, or zero when flowing the other way."""
-    if status.battery_power is None or status.battery_status is None:
+    if status.battery_power is None or (current := battery_status(status)) is None:
         return None
-    return status.battery_power if status.battery_status == direction else 0
+    return status.battery_power if current == direction else 0
 
 
 def _is_number(value: object) -> bool:
@@ -219,7 +225,6 @@ def hold_glitches(previous: MarstekData | None, current: MarstekData) -> Marstek
     if previous is None:
         return current
     status = current.status
-    # ponytail: naive SOC floor heuristic, replace with rate-of-change limit if real 0% readings get held
     if (
         status.battery_soc == 0
         and (previous.status.battery_soc or 0) >= SOC_GLITCH_FLOOR
@@ -251,11 +256,18 @@ def es_number(data: MarstekData, key: str) -> float | int | None:
     return value if _is_number(value) else None
 
 
+def state_of_charge(data: MarstekData) -> float | int | None:
+    """Return the state of charge, or None when the firmware reports no battery."""
+    if data.es.get("bat_cap") == 0:
+        return None
+    return data.status.battery_soc
+
+
 def stored_energy(data: MarstekData) -> float | None:
     """Return stored energy in Wh from total capacity and state of charge."""
     capacity = es_number(data, "bat_cap")
     soc = data.status.battery_soc
-    if capacity is None or soc is None:
+    if not capacity or soc is None:
         return None
     return capacity * soc / 100
 

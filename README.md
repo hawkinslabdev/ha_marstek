@@ -48,15 +48,17 @@ Support depends on the device firmware exposing the Marstek Open API. Other devi
 <details>
 <summary>Sensors, controls, and data sources</summary>
 
+<br>
+
 | Entity | Type | Source |
 | --- | --- | --- |
-| Battery level | Sensor (%) | `ES.GetStatus` / `ES.GetMode` `bat_soc` |
-| Battery power, battery status | Sensor (W), enum | `ongrid_power` magnitude and sign |
-| Battery charge power, battery discharge power | Sensor (W) | `ongrid_power`, split by direction; `0` for the inactive direction |
+| State of charge | Sensor (%) | `ES.GetStatus` / `ES.GetMode` `bat_soc`; unknown while `bat_cap` is `0` |
+| Battery power, battery status | Sensor (W), enum (`charging`, `discharging`, `idle`) | `ongrid_power` magnitude and sign |
+| Charging power, discharging power | Sensor (W) | `ongrid_power`, split by direction; `0` for the inactive direction |
 | Battery energy in, battery energy out | Sensor (kWh, total increasing) | `ES.GetStatus` `total_grid_input_energy`, `total_grid_output_energy` (AC side) |
-| Stored energy | Sensor (kWh) | `bat_cap` × `bat_soc` |
+| Stored energy | Sensor (kWh) | `bat_cap` × `bat_soc`; unknown while `bat_cap` is `0` |
 | Device mode | Sensor (enum) | `ES.GetMode` `mode` |
-| PV1–PV4 power, voltage, current, state | Sensor | `PV.GetStatus` (Venus A/D) |
+| PV1–PV4 power, voltage, current, state; lifetime PV energy | Sensor | `PV.GetStatus`, `total_pv_energy`; created for Venus A/D only |
 | Operating mode | Select (`Auto`, `AI`, `Passive`, `UPS`) | `ES.SetMode`; `Manual` requires an app schedule and reports as unknown |
 | Passive power | Number (W, −2500 to 2500) | `passive_cfg.power`; negative charges, positive discharges |
 | Passive duration | Number (s, 60 to 86400) | `passive_cfg.cd_time` |
@@ -65,10 +67,14 @@ Passive power and duration are stored in Home Assistant and restored after resta
 
 Battery energy in and out map to the **Battery storage** section of the Energy dashboard.
 
+Some firmware (Venus E 3.0 v148) reports `0` for `bat_soc`, `bat_cap`, and every `Bat.GetStatus` field. State of charge and stored energy stay unknown on that firmware.
+
 </details>
 
 <details>
 <summary>Data quality</summary>
+
+<br>
 
 Readings that drop to implausible values are replaced with the previous value: energy counters that decrease, `bat_cap` of `0`, and a battery level of `0` % after a reading of 10 % or more.
 
@@ -76,6 +82,8 @@ Readings that drop to implausible values are replaced with the previous value: e
 
 <details>
 <summary>Repairs and diagnostics</summary>
+
+<br>
 
 A repair issue is raised after 10 consecutive polls (5 minutes) without an Open API response, a common result of firmware updates resetting Open API. The issue clears on the next successful poll. Entities report `unavailable` while the device is silent.
 

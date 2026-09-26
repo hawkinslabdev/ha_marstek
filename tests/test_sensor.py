@@ -1,23 +1,30 @@
 """Tests for the Marstek sensor platform."""
 
-from aiomarstek import MarstekDeviceStatus
-import pytest
+from unittest.mock import MagicMock
 
+from aiomarstek import MarstekDeviceInfo, MarstekDeviceStatus
+import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 
 from .conftest import HOST
+from custom_components.marstek.const import DOMAIN
 
 PREFIX = "sensor.marstek_venus_e_3_0"
 
 
 @pytest.mark.parametrize(
-    ("device_status", "battery_power", "charge", "discharge"),
+    ("device_status", "battery_power", "status", "charge", "discharge"),
     [
         (
             MarstekDeviceStatus(device_ip=HOST).with_es_status_response(
                 {"ongrid_power": -1200}
             ),
             "1200",
+            "charging",
             "1200",
             "0",
         ),
@@ -26,6 +33,7 @@ PREFIX = "sensor.marstek_venus_e_3_0"
                 {"ongrid_power": 800}
             ),
             "800",
+            "discharging",
             "0",
             "800",
         ),
@@ -34,20 +42,28 @@ PREFIX = "sensor.marstek_venus_e_3_0"
                 {"ongrid_power": 0}
             ),
             "0",
+            "idle",
             "0",
             "0",
         ),
-        (MarstekDeviceStatus(device_ip=HOST), "unknown", "unknown", "unknown"),
+        (
+            MarstekDeviceStatus(device_ip=HOST),
+            "unknown",
+            "unknown",
+            "unknown",
+            "unknown",
+        ),
     ],
 )
 @pytest.mark.usefixtures("init_integration")
 async def test_battery_power_split(
-    hass: HomeAssistant, battery_power: str, charge: str, discharge: str
+    hass: HomeAssistant, battery_power: str, status: str, charge: str, discharge: str
 ) -> None:
-    """Battery power is split into charge and discharge sensors."""
+    """Battery power is split into charging and discharging sensors."""
     assert hass.states.get(f"{PREFIX}_battery_power").state == battery_power
-    assert hass.states.get(f"{PREFIX}_battery_charge_power").state == charge
-    assert hass.states.get(f"{PREFIX}_battery_discharge_power").state == discharge
+    assert hass.states.get(f"{PREFIX}_battery_status").state == status
+    assert hass.states.get(f"{PREFIX}_charging_power").state == charge
+    assert hass.states.get(f"{PREFIX}_discharging_power").state == discharge
 
 
 @pytest.mark.parametrize(
@@ -69,3 +85,65 @@ async def test_battery_energy(hass: HomeAssistant) -> None:
     assert hass.states.get(f"{PREFIX}_battery_energy_in").state == "3.273"
     assert hass.states.get(f"{PREFIX}_battery_energy_out").state == "2.548"
     assert hass.states.get(f"{PREFIX}_stored_energy").state == "2.56"
+
+
+@pytest.mark.parametrize(
+    ("device_status", "es_status"),
+    [
+        (
+            MarstekDeviceStatus(device_ip=HOST).with_es_status_response(
+                {"bat_soc": 0, "bat_cap": 0}
+            ),
+            {"bat_soc": 0, "bat_cap": 0},
+        )
+    ],
+)
+@pytest.mark.usefixtures("init_integration")
+async def test_unreported_battery(hass: HomeAssistant) -> None:
+    """A zero capacity means the firmware reports no battery data."""
+    assert hass.states.get(f"{PREFIX}_state_of_charge").state == "unknown"
+    assert hass.states.get(f"{PREFIX}_stored_energy").state == "unknown"
+
+
+@pytest.mark.usefixtures("init_integration")
+async def test_no_pv_entities_on_venus_e(hass: HomeAssistant) -> None:
+    """Venus E has no PV inputs."""
+    assert hass.states.get(f"{PREFIX}_pv1_power") is None
+    assert hass.states.get(f"{PREFIX}_lifetime_pv_energy") is None
+
+
+@pytest.mark.parametrize(
+    "device_info",
+    [
+        MarstekDeviceInfo.from_response(
+            {"device": "VNSA-0", "ver": 147, "wifi_mac": "aa"}, HOST
+        )
+    ],
+)
+@pytest.mark.usefixtures("init_integration")
+async def test_pv_entities_on_venus_a(hass: HomeAssistant) -> None:
+    """Venus A exposes PV inputs."""
+    assert hass.states.get("sensor.marstek_venus_a_pv1_power") is not None
+    assert hass.states.get("sensor.marstek_venus_a_lifetime_pv_energy") is not None
+
+
+async def test_stale_pv_entities_removed(
+    hass: HomeAssistant,
+    udp_client: MagicMock,
+    device_info: MarstekDeviceInfo,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """PV entities registered by earlier versions are removed on Venus E."""
+    entry = MockConfigEntry(
+        domain=DOMAIN, unique_id=device_info.stable_id, data={CONF_HOST: HOST}
+    )
+    entry.add_to_hass(hass)
+    stale = entity_registry.async_get_or_create(
+        "sensor",
+        DOMAIN,
+        f"{device_info.stable_id}_pv1_power",
+        config_entry=entry,
+    )
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entity_registry.async_get(stale.entity_id) is None

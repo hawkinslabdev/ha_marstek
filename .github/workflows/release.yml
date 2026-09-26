@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set manifest version from tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="${TAG#v}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.]+)?$ ]]; then
+            echo "Tag $TAG is not a version" >&2
+            exit 1
+          fi
+          jq --arg v "$version" '.version = $v' custom_components/marstek/manifest.json > manifest.json
+          mv manifest.json custom_components/marstek/manifest.json
+      - name: Package integration
+        working-directory: custom_components/marstek
+        run: zip -r "$GITHUB_WORKSPACE/marstek.zip" . -x '__pycache__/*'
+      - name: Attach package to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" marstek.zip --clobber

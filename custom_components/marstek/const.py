@@ -29,4 +29,5 @@ SUPPORTED_DEVICE_TYPES: Final[dict[str, str]] = {
 PV_STATE_OPTIONS: Final = ("standby", "working")
 DEVICE_MODE_OPTIONS: Final = ("auto", "ai", "manual", "passive", "ups")
 SELECTABLE_MODES: Final = ("auto", "ai", "passive", "ups")
-BATTERY_STATUS_OPTIONS: Final = ("selling", "charging", "idle")
+BATTERY_STATUS_OPTIONS: Final = ("discharging", "charging", "idle")
+PV_MODELS: Final = ("Venus A", "Venus D")
