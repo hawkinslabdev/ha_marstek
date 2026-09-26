@@ -68,7 +68,25 @@ Support depends on the device firmware exposing the Marstek Open API. Other devi
 
 Passive power and duration are stored in Home Assistant and restored after restart. Changes apply immediately while the device is in passive mode, otherwise on the next switch to `Passive`.
 
-Battery energy in and out map to the **Battery storage** section of the Energy dashboard.
+</details>
+
+<details>
+<summary>Energy dashboard</summary>
+
+<br>
+
+Since integrations cannot directly register Energy dashboard sources and Home Assistant lacks a dedicated battery entity type, add the battery manually:
+
+1. Navigate to **Settings** > **Dashboards** > **Energy**.
+2. Select **Battery systems**.
+3. Map the dialog fields:
+* **Energy discharged from the battery:** `sensor.marstek_venus_e_3_0_battery_energy_out`
+* **Energy charged into the battery:** `sensor.marstek_venus_e_3_0_battery_energy_in`
+* **Power measurement type:** two sensors
+* **Discharge power:** `sensor.marstek_venus_e_3_0_discharging_power`
+* **Charge power:** `sensor.marstek_venus_e_3_0_charging_power`
+* **State of charge sensor:** `sensor.marstek_venus_e_3_0_state_of_charge`
+* **Usable capacity (kWh):** optional; only weights the combined state of charge across multiple batteries
 
 </details>
 
@@ -92,9 +110,9 @@ The **Error state** diagnostic sensor reports the outcome of the latest poll (`n
 
 **Download diagnostics** on the device page exports device information, normalized status, error state, Open API revision, and the latest raw reply per Open API request. MAC addresses, Wi-Fi name, and `src` identifiers are redacted.
 
-</details>
-
 The device is polled locally every 30 seconds. No cloud account or external service is required.
+
+</details>
 
 # License
 
