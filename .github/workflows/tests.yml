@@ -12,6 +12,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.14"
+          activate-environment: true
       - run: uv pip install -r requirements_test.txt
       - run: ruff check .
       - run: ruff format --check .
