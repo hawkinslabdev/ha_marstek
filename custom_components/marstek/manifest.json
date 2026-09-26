@@ -1,6 +1,6 @@
 {
   "domain": "marstek",
-  "name": "Marstek",
+  "name": "Marstek (unofficial)",
   "codeowners": ["@MarstekEnergy", "@hawkinslabdev"],
   "config_flow": true,
   "dependencies": ["network"],
