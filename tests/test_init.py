@@ -24,6 +24,7 @@ from custom_components.marstek.coordinator import SCAN_INTERVAL
 
 ERROR_STATE = "sensor.marstek_venus_e_3_0_error_state"
 
+
 async def _poll(hass: HomeAssistant, freezer: FrozenDateTimeFactory) -> None:
     freezer.tick(SCAN_INTERVAL)
     async_fire_time_changed(hass)
