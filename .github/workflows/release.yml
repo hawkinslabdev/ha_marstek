@@ -1,33 +1,46 @@
 name: Release
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 0.4.0"
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
   release:
+    needs: tests
     runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
-      - name: Set manifest version from tag
-        env:
-          TAG: ${{ github.event.release.tag_name }}
+      - name: Validate version
         run: |
-          version="${TAG#v}"
-          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.]+)?$ ]]; then
-            echo "Tag $TAG is not a version" >&2
+          VERSION="${VERSION#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.]+)?$ ]]; then
+            echo "$VERSION is not a version" >&2
             exit 1
           fi
-          jq --arg v "$version" '.version = $v' custom_components/marstek/manifest.json > manifest.json
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "v$VERSION already exists" >&2
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+      - name: Set manifest version
+        run: |
+          jq --arg v "$VERSION" '.version = $v' custom_components/marstek/manifest.json > manifest.json
           mv manifest.json custom_components/marstek/manifest.json
       - name: Package integration
         working-directory: custom_components/marstek
         run: zip -r "$GITHUB_WORKSPACE/marstek.zip" . -x '__pycache__/*'
-      - name: Attach package to release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$TAG" marstek.zip --clobber
+      - name: Tag and publish release
+        run: gh release create "v$VERSION" marstek.zip --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
