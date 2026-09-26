@@ -1,9 +1,11 @@
 """Tests for Marstek mode control."""
 
+import asyncio
 from unittest.mock import MagicMock
 
 from aiomarstek import MarstekDeviceStatus
 import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from homeassistant.components.number import (
     ATTR_VALUE,
@@ -92,3 +94,28 @@ async def test_set_mode_rejected(hass: HomeAssistant, udp_client: MagicMock) -> 
 async def test_select_manual_mode_unknown(hass: HomeAssistant) -> None:
     """Manual mode is app-scheduled and not selectable."""
     assert hass.states.get(SELECT).state == "unknown"
+
+
+async def test_set_mode_waits_for_poll(
+    hass: HomeAssistant, init_integration: MockConfigEntry, udp_client: MagicMock
+) -> None:
+    """ES.SetMode is sent only after an in-flight poll finishes."""
+    coordinator = init_integration.runtime_data.coordinator
+    status = udp_client.get_device_status.return_value
+    release = asyncio.Event()
+
+    async def slow_poll(*_args: object, **_kwargs: object) -> MarstekDeviceStatus:
+        await release.wait()
+        return status
+
+    udp_client.get_device_status.side_effect = slow_poll
+    poll = hass.async_create_task(coordinator.async_refresh())
+    await asyncio.sleep(0)
+    select = hass.async_create_task(_select(hass, "ai"))
+    await asyncio.sleep(0)
+    udp_client.async_set_mode.assert_not_called()
+
+    release.set()
+    await poll
+    await select
+    udp_client.async_set_mode.assert_called_once()

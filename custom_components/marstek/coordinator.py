@@ -1,5 +1,6 @@
 """Data update coordinator for Marstek devices."""
 
+import asyncio
 from dataclasses import dataclass, field, replace
 from datetime import timedelta
 import logging
@@ -73,6 +74,7 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
         self.device_ip = config_entry.data[CONF_HOST]
         self.port = config_entry.data.get(CONF_PORT, DEFAULT_PORT)
         self.udp_client = udp_client
+        self.io_lock = asyncio.Lock()
         super().__init__(
             hass,
             _LOGGER,
@@ -143,10 +145,11 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
             )
 
         try:
-            status = await self.udp_client.get_device_status(
-                self.device_ip,
-                previous_data=previous.status if previous else None,
-            )
+            async with self.io_lock:
+                status = await self.udp_client.get_device_status(
+                    self.device_ip,
+                    previous_data=previous.status if previous else None,
+                )
         except (TimeoutError, OSError, TypeError) as err:
             self.failed_polls += 1
             if (state := error_state(err)) != self.error_state:
@@ -182,7 +185,8 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
         """Switch the operating mode, applying passive settings when relevant."""
         config = mode_config(mode, self.passive_power, self.passive_duration)
         try:
-            accepted = await self.udp_client.async_set_mode(self.device_ip, config)
+            async with self.io_lock:
+                accepted = await self.udp_client.async_set_mode(self.device_ip, config)
         except (TimeoutError, OSError) as err:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
