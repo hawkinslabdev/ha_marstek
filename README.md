@@ -111,7 +111,7 @@ The **Error state** diagnostic sensor reports the outcome of the latest poll (`n
 
 **Download diagnostics** on the device page exports device information, normalized status, error state, Open API revision, and the latest raw reply per Open API request. MAC addresses, Wi-Fi name, and `src` identifiers are redacted.
 
-The device is polled locally every 30 seconds. No cloud account or external service is required.
+The device is polled locally every 60 seconds. No cloud account or external service is required.
 
 </details>
 

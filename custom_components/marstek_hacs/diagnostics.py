@@ -27,6 +27,8 @@ async def async_get_config_entry_diagnostics(
             "domain": entry.domain,
             "last_update": coordinator.last_update,
             "failed_polls": coordinator.failed_polls,
+            "polls_total": coordinator.polls_total,
+            "polls_failed_total": coordinator.polls_failed_total,
             "error_state": coordinator.error_state,
             "open_api_revision": OPEN_API_REVISION,
         },

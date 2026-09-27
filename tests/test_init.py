@@ -1,6 +1,7 @@
 """Tests for Marstek setup, availability, and repairs."""
 
 from dataclasses import replace
+from datetime import timedelta
 from unittest.mock import MagicMock
 
 from aiomarstek import MarstekDeviceInfo
@@ -113,6 +114,54 @@ async def test_error_state_and_logging(
     await _poll(hass, freezer)
     assert hass.states.get(ERROR_STATE).state == "none"
     assert f"Marstek {HOST}:30000 data recovered" in caplog.text
+
+
+async def test_poll_interval_and_timeout(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+    udp_client: MagicMock,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """The device is polled once a minute with a 5 second request timeout."""
+    await _poll(hass, freezer)
+    calls = udp_client.get_device_status.call_count
+    freezer.tick(timedelta(seconds=30))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert udp_client.get_device_status.call_count == calls
+
+    freezer.tick(timedelta(seconds=30))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert udp_client.get_device_status.call_count == calls + 1
+    assert udp_client.get_device_status.call_args.kwargs["timeout"] == 5.0
+
+
+async def test_firmware_refreshed_after_outage(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+    udp_client: MagicMock,
+    freezer: FrozenDateTimeFactory,
+    device_registry: dr.DeviceRegistry,
+) -> None:
+    """Device info is re-read after a missed poll and updates the firmware."""
+    await _poll(hass, freezer)
+    assert udp_client.get_device_info.call_count == 1
+
+    status = udp_client.get_device_status.return_value
+    udp_client.get_device_status.side_effect = TimeoutError
+    await _poll(hass, freezer)
+    udp_client.get_device_status.side_effect = None
+    udp_client.get_device_status.return_value = status
+    udp_client.get_device_info.return_value = replace(
+        udp_client.get_device_info.return_value, version=150
+    )
+    await _poll(hass, freezer)
+
+    device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, init_integration.unique_id), init_integration.entry_id
+    )
+    assert device.sw_version == "150"
 
 
 async def test_legacy_entity_ids_migrated(

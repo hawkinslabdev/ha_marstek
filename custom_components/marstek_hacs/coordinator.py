@@ -12,7 +12,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, HomeAssistantError
-from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import device_registry as dr, issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
@@ -20,6 +20,7 @@ from .const import (
     DEFAULT_PORT,
     DOMAIN,
     OPEN_API_REVISION,
+    REQUEST_TIMEOUT,
     SUPPORTED_DEVICE_TYPES,
     UNAVAILABLE_POLLS,
     UNREACHABLE_POLLS,
@@ -35,7 +36,7 @@ from .helpers import (
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=30)
+SCAN_INTERVAL = timedelta(seconds=60)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -64,6 +65,8 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
     passive_power: int = 0
     passive_duration: int = 3600
     failed_polls: int = 0
+    polls_total: int = 0
+    polls_failed_total: int = 0
     error_state: str = "none"
     last_update: datetime | None = None
 
@@ -147,14 +150,17 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
                 status=MarstekDeviceStatus(device_ip=self.device_ip)
             )
 
+        self.polls_total += 1
         try:
             async with self.io_lock:
                 status = await self.udp_client.get_device_status(
                     self.device_ip,
                     previous_data=previous.status if previous else None,
+                    timeout=REQUEST_TIMEOUT,
                 )
         except (TimeoutError, OSError, TypeError) as err:
             self.failed_polls += 1
+            self.polls_failed_total += 1
             if (state := error_state(err)) != self.error_state:
                 self.error_state = state
                 self.async_update_listeners()
@@ -187,11 +193,30 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
 
         if self.failed_polls >= UNREACHABLE_POLLS:
             ir.async_delete_issue(self.hass, DOMAIN, self.issue_id)
+        if self.failed_polls:
+            await self._async_refresh_firmware()
         self.failed_polls = 0
         self.error_state = "none"
         self.last_update = dt_util.utcnow()
         es = self.udp_client.results.get(self.device_ip, {}).get("ES.GetStatus", {})
         return hold_glitches(previous, MarstekData(status=status, es=es))
+
+    async def _async_refresh_firmware(self) -> None:
+        """Re-read the firmware version after an outage, which a firmware update causes."""
+        # ponytail: a reboot shorter than one poll interval goes unnoticed until reload
+        try:
+            async with self.io_lock:
+                info = await self.udp_client.get_device_info(self.device_ip)
+        except TimeoutError, OSError, TypeError:
+            return
+        if info.version == self.device_info.version:
+            return
+        self.device_info = replace(self.device_info, version=info.version)
+        registry = dr.async_get(self.hass)
+        if device := registry.async_get_device_by_identifier(
+            (DOMAIN, self.device_info.stable_id), self.config_entry.entry_id
+        ):
+            registry.async_update_device(device.id, sw_version=str(info.version))
 
     async def async_set_mode(self, mode: str) -> None:
         """Switch the operating mode, applying passive settings when relevant."""

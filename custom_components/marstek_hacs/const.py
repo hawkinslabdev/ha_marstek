@@ -6,7 +6,8 @@ DOMAIN: Final = "marstek_hacs"
 
 DEFAULT_PORT: Final = 30000
 SCAN_PORTS: Final = range(49152, 65536)
-UNAVAILABLE_POLLS: Final = 3
+UNAVAILABLE_POLLS: Final = 2
+REQUEST_TIMEOUT: Final = 5.0
 UNREACHABLE_POLLS: Final = 10
 OPEN_API_REVISION: Final = "3.1"
 

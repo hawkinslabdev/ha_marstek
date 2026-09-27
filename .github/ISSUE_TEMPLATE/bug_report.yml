@@ -1,0 +1,39 @@
+name: Bug report
+description: Report a defect. Diagnostics are required.
+labels:
+  - bug
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Observed behavior, expected behavior, and when it started.
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Device model and firmware
+      description: From the device page in Home Assistant, e.g. "Venus E 3.0, firmware 147".
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Integration and Home Assistant versions
+      placeholder: e.g. 0.4.0 / 2026.9.3
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Device page > three-dot menu > Download diagnostics. Attach the file here.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Debug logs
+      description: Enable debug logging for the integration, reproduce the issue, then paste the relevant lines.
+      render: text
