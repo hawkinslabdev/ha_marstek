@@ -176,6 +176,9 @@
             "stored_energy": {
                 "name": "Stored energy"
             },
+            "battery_cycles": {
+                "name": "Battery cycles"
+            },
             "total_pv_energy": {
                 "name": "Lifetime PV energy"
             }

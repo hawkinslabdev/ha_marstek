@@ -270,6 +270,15 @@ def stored_energy(data: MarstekData) -> float | None:
     return capacity * soc / 100
 
 
+def battery_cycles(data: MarstekData) -> float | None:
+    """Return equivalent full cycles: lifetime discharged energy over capacity."""
+    discharged = es_number(data, "total_grid_output_energy")
+    capacity = es_number(data, "bat_cap")
+    if discharged is None or not capacity:
+        return None
+    return round(discharged / capacity, 3)
+
+
 def model_name(device_type: str) -> str:
     """Return the marketing model name for a reported device type."""
     return SUPPORTED_DEVICE_TYPES.get(device_type, device_type)

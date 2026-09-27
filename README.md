@@ -66,6 +66,7 @@ Support depends on the device firmware exposing the Marstek Open API. Other devi
 | Charging power, discharging power | Sensor (W) | `ongrid_power`, split by direction; `0` for the inactive direction |
 | Battery energy in, battery energy out | Sensor (kWh, total increasing) | `ES.GetStatus` `total_grid_input_energy`, `total_grid_output_energy` (AC side) |
 | Stored energy | Sensor (kWh) | `bat_cap` × `bat_soc` |
+| Battery cycles | Sensor (diagnostic) | Equivalent full cycles: `total_grid_output_energy` ÷ `bat_cap`; AC-side energy, so slightly below the BMS count |
 | Device mode | Sensor (enum) | `ES.GetMode` `mode` |
 | PV1–PV4 power, voltage, current, state; lifetime PV energy | Sensor | `PV.GetStatus`, `total_pv_energy`; created for Venus A/D only |
 | Operating mode | Select (`Auto`, `AI`, `Passive`, `UPS`) | `ES.SetMode`; `Manual` requires an app schedule and reports as unknown |

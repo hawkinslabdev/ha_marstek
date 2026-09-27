@@ -85,6 +85,7 @@ async def test_battery_energy(hass: HomeAssistant) -> None:
     assert hass.states.get(f"{PREFIX}_battery_energy_in").state == "3.273"
     assert hass.states.get(f"{PREFIX}_battery_energy_out").state == "2.548"
     assert hass.states.get(f"{PREFIX}_stored_energy").state == "2.56"
+    assert hass.states.get(f"{PREFIX}_battery_cycles").state == "0.498"
 
 
 @pytest.mark.parametrize(
@@ -103,6 +104,7 @@ async def test_empty_battery(hass: HomeAssistant) -> None:
     """An empty battery reports 0 % and no stored energy."""
     assert hass.states.get(f"{PREFIX}_state_of_charge").state == "0"
     assert hass.states.get(f"{PREFIX}_stored_energy").state == "0.0"
+    assert hass.states.get(f"{PREFIX}_battery_cycles").state == "unknown"
 
 
 @pytest.mark.usefixtures("init_integration")

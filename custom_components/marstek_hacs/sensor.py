@@ -36,6 +36,7 @@ from .const import (
 from .coordinator import MarstekConfigEntry, MarstekData
 from .entity import MarstekEntity
 from .helpers import (
+    battery_cycles,
     battery_flow_power,
     battery_status,
     es_number,
@@ -159,6 +160,15 @@ SENSOR_DESCRIPTIONS: tuple[MarstekSensorEntityDescription, ...] = (
         suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=stored_energy,
+    ),
+    MarstekSensorEntityDescription(
+        key="battery_cycles",
+        translation_key="battery_cycles",
+        icon="mdi:battery-sync",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=battery_cycles,
     ),
     MarstekSensorEntityDescription(
         key="device_mode",
