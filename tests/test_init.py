@@ -1,5 +1,6 @@
 """Tests for Marstek setup, availability, and repairs."""
 
+from dataclasses import replace
 from unittest.mock import MagicMock
 
 from aiomarstek import MarstekDeviceInfo
@@ -19,16 +20,43 @@ from homeassistant.helpers import (
 )
 
 from .conftest import HOST
-from custom_components.marstek_hacs.const import DOMAIN, UNREACHABLE_POLLS
+from custom_components.marstek_hacs.const import (
+    DOMAIN,
+    UNAVAILABLE_POLLS,
+    UNREACHABLE_POLLS,
+)
 from custom_components.marstek_hacs.coordinator import SCAN_INTERVAL
 
 ERROR_STATE = "sensor.marstek_venus_e_3_0_error_state"
+SOC = "sensor.marstek_venus_e_3_0_state_of_charge"
 
 
 async def _poll(hass: HomeAssistant, freezer: FrozenDateTimeFactory) -> None:
     freezer.tick(SCAN_INTERVAL)
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
+
+
+async def test_missed_polls_keep_last_values(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+    udp_client: MagicMock,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Entities keep their last values until several polls in a row fail."""
+    udp_client.get_device_status.return_value = replace(
+        udp_client.get_device_status.return_value, battery_soc=55
+    )
+    await _poll(hass, freezer)
+    udp_client.get_device_status.side_effect = TimeoutError
+
+    for _ in range(UNAVAILABLE_POLLS - 1):
+        await _poll(hass, freezer)
+    assert hass.states.get(SOC).state == "55"
+    assert hass.states.get(ERROR_STATE).state == "no_response"
+
+    await _poll(hass, freezer)
+    assert hass.states.get(SOC).state == "unavailable"
 
 
 async def test_unreachable_repair(
@@ -46,10 +74,7 @@ async def test_unreachable_repair(
     for _ in range(UNREACHABLE_POLLS - 1):
         await _poll(hass, freezer)
     assert issue_registry.async_get_issue(DOMAIN, issue_id) is None
-    assert (
-        hass.states.get("sensor.marstek_venus_e_3_0_state_of_charge").state
-        == "unavailable"
-    )
+    assert hass.states.get(SOC).state == "unavailable"
 
     await _poll(hass, freezer)
     issue = issue_registry.async_get_issue(DOMAIN, issue_id)
@@ -73,7 +98,8 @@ async def test_error_state_and_logging(
     assert hass.states.get(ERROR_STATE).state == "none"
 
     udp_client.get_device_status.side_effect = TimeoutError
-    await _poll(hass, freezer)
+    for _ in range(UNAVAILABLE_POLLS):
+        await _poll(hass, freezer)
     assert hass.states.get(ERROR_STATE).state == "no_response"
     assert f"{HOST}:30000" in caplog.text
     assert "no response" in caplog.text

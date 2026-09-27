@@ -21,6 +21,7 @@ from .const import (
     DOMAIN,
     OPEN_API_REVISION,
     SUPPORTED_DEVICE_TYPES,
+    UNAVAILABLE_POLLS,
     UNREACHABLE_POLLS,
 )
 from .helpers import (
@@ -167,6 +168,14 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
                     translation_key="open_api_unreachable",
                     translation_placeholders={"host": self.device_ip},
                 )
+            if previous and self.failed_polls < UNAVAILABLE_POLLS:
+                _LOGGER.debug(
+                    "Device %s missed poll %s: %s",
+                    self.device_ip,
+                    self.failed_polls,
+                    error_reason(err),
+                )
+                return previous
             raise UpdateFailed(
                 translation_domain=DOMAIN,
                 translation_key="device_update_failed",
