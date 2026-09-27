@@ -50,6 +50,9 @@
             },
             "passive_power": {
                 "name": "Vermogen passieve modus"
+            },
+            "dod": {
+                "name": "Ontlaaddiepte"
             }
         },
         "select": {
@@ -208,6 +211,12 @@
         },
         "unsupported_device": {
             "message": "Het Marstek-apparaattype {device_type} wordt nog niet ondersteund."
+        },
+        "set_dod_failed": {
+            "message": "Kan de ontlaaddiepte van het Marstek-apparaat op {host} niet instellen."
+        },
+        "set_dod_rejected": {
+            "message": "Het Marstek-apparaat heeft ontlaaddiepte {value} % geweigerd."
         }
     },
     "issues": {

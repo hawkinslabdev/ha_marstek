@@ -3,7 +3,7 @@
 import asyncio
 from unittest.mock import MagicMock
 
-from aiomarstek import MarstekDeviceStatus
+from aiomarstek import MarstekDeviceInfo, MarstekDeviceStatus
 from freezegun.api import FrozenDateTimeFactory
 import pytest
 from pytest_homeassistant_custom_component.common import (
@@ -31,6 +31,13 @@ from custom_components.marstek_hacs.coordinator import SCAN_INTERVAL
 SELECT = "select.marstek_venus_e_3_0_operating_mode"
 POWER = "number.marstek_venus_e_3_0_passive_power"
 DURATION = "number.marstek_venus_e_3_0_passive_duration"
+DOD = "number.marstek_venus_e_3_0_depth_of_discharge"
+
+
+def _info(version: int | str) -> MarstekDeviceInfo:
+    return MarstekDeviceInfo.from_response(
+        {"device": "VNSE3-0", "ver": version, "wifi_mac": "aabbccddeeff"}, HOST
+    )
 
 
 async def _select(hass: HomeAssistant, option: str) -> None:
@@ -148,3 +155,34 @@ async def test_reload_does_not_send_mode(
 
     assert hass.states.get(POWER).state == "500"
     udp_client.async_set_mode.assert_not_called()
+
+
+@pytest.mark.parametrize("device_info", [_info(149), _info("unknown")])
+@pytest.mark.usefixtures("init_integration")
+async def test_no_dod_below_firmware_150(hass: HomeAssistant) -> None:
+    """Depth of discharge needs firmware 150 or an unparseable version is skipped."""
+    assert hass.states.get(DOD) is None
+
+
+@pytest.mark.parametrize("device_info", [_info(150), _info("150.9")])
+@pytest.mark.usefixtures("init_integration")
+async def test_dod_from_firmware_150(
+    hass: HomeAssistant, udp_client: MagicMock
+) -> None:
+    """Depth of discharge defaults to 88 and is written with DOD.SET."""
+    assert hass.states.get(DOD).state == "88"
+    udp_client.async_set_dod.assert_not_called()
+
+    await _set(hass, DOD, 70)
+    udp_client.async_set_dod.assert_called_once_with(HOST, 70)
+    assert hass.states.get(DOD).state == "70"
+
+
+@pytest.mark.parametrize("device_info", [_info(150)])
+@pytest.mark.usefixtures("init_integration")
+async def test_dod_rejected(hass: HomeAssistant, udp_client: MagicMock) -> None:
+    """A rejected depth of discharge raises an error and keeps the old value."""
+    udp_client.async_set_dod.return_value = False
+    with pytest.raises(HomeAssistantError):
+        await _set(hass, DOD, 70)
+    assert hass.states.get(DOD).state == "88"

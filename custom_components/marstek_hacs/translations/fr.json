@@ -50,6 +50,9 @@
             },
             "passive_power": {
                 "name": "Puissance du mode passif"
+            },
+            "dod": {
+                "name": "Profondeur de décharge"
             }
         },
         "select": {
@@ -208,6 +211,12 @@
         },
         "unsupported_device": {
             "message": "Le type d'appareil Marstek {device_type} n'est pas encore pris en charge."
+        },
+        "set_dod_failed": {
+            "message": "Impossible de régler la profondeur de décharge de l'appareil Marstek à {host}."
+        },
+        "set_dod_rejected": {
+            "message": "L'appareil Marstek a refusé la profondeur de décharge {value} %."
         }
     },
     "issues": {

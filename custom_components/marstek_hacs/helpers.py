@@ -17,7 +17,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.util import slugify
 from homeassistant.util.hass_dict import HassKey
 
-from .const import DOMAIN, SUPPORTED_DEVICE_TYPES
+from .const import DOMAIN, SUPPORTED_DEVICE_TYPES, SYS_MIN_FIRMWARE
 
 if TYPE_CHECKING:
     from .coordinator import MarstekData
@@ -69,14 +69,22 @@ class MarstekClient(MarstekUDPClient):
             raise TimeoutError(f"No response from {device_ip}")
         return status
 
-    async def async_set_mode(self, device_ip: str, config: dict[str, Any]) -> bool:
-        """Send ES.SetMode and return whether the device accepted it."""
+    async def _async_set(
+        self, device_ip: str, method: str, params: dict[str, Any]
+    ) -> bool:
         response = await self.send_request_with_polling_control(
-            command_builder.build_command("ES.SetMode", {"id": 0, "config": config}),
-            device_ip,
+            command_builder.build_command(method, {"id": 0, **params}), device_ip
         )
         result = response.get("result")
         return isinstance(result, dict) and result.get("set_result") is True
+
+    async def async_set_mode(self, device_ip: str, config: dict[str, Any]) -> bool:
+        """Send ES.SetMode and return whether the device accepted it."""
+        return await self._async_set(device_ip, "ES.SetMode", {"config": config})
+
+    async def async_set_dod(self, device_ip: str, value: int) -> bool:
+        """Send DOD.SET and return whether the device accepted it."""
+        return await self._async_set(device_ip, "DOD.SET", {"value": value})
 
     @override
     async def async_setup(self) -> None:
@@ -277,6 +285,14 @@ def battery_cycles(data: MarstekData) -> float | None:
     if discharged is None or not capacity:
         return None
     return round(discharged / capacity, 3)
+
+
+def supports_sys(version: int | str) -> bool:
+    """Return whether the firmware accepts SYS commands such as DOD.SET."""
+    try:
+        return float(version) >= SYS_MIN_FIRMWARE
+    except ValueError:
+        return False
 
 
 def model_name(device_type: str) -> str:

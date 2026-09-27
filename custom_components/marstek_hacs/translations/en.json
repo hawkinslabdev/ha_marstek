@@ -50,6 +50,9 @@
             },
             "passive_power": {
                 "name": "Passive power"
+            },
+            "dod": {
+                "name": "Depth of discharge"
             }
         },
         "select": {
@@ -208,6 +211,12 @@
         },
         "unsupported_device": {
             "message": "The Marstek device type {device_type} is not currently supported."
+        },
+        "set_dod_failed": {
+            "message": "Unable to set the depth of discharge of the Marstek device at {host}."
+        },
+        "set_dod_rejected": {
+            "message": "The Marstek device rejected depth of discharge {value} %."
         }
     },
     "issues": {

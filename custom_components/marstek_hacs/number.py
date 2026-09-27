@@ -8,12 +8,13 @@ from homeassistant.components.number import (
     NumberMode,
     RestoreNumber,
 )
-from homeassistant.const import EntityCategory, UnitOfPower, UnitOfTime
+from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfPower, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import MarstekConfigEntry
 from .entity import MarstekEntity
+from .helpers import supports_sys
 
 PARALLEL_UPDATES = 1
 
@@ -43,6 +44,17 @@ NUMBER_DESCRIPTIONS: tuple[NumberEntityDescription, ...] = (
     ),
 )
 
+DOD = NumberEntityDescription(
+    key="dod",
+    translation_key="dod",
+    native_unit_of_measurement=PERCENTAGE,
+    native_min_value=30,
+    native_max_value=88,
+    native_step=1,
+    mode=NumberMode.BOX,
+    entity_category=EntityCategory.CONFIG,
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -51,10 +63,13 @@ async def async_setup_entry(
 ) -> None:
     """Set up Marstek passive mode settings."""
     coordinator = config_entry.runtime_data.coordinator
-    async_add_entities(
+    entities: list[RestoreNumber] = [
         MarstekPassiveNumber(coordinator, description)
         for description in NUMBER_DESCRIPTIONS
-    )
+    ]
+    if supports_sys(coordinator.device_info.version):
+        entities.append(MarstekDodNumber(coordinator, DOD))
+    async_add_entities(entities)
 
 
 class MarstekPassiveNumber(MarstekEntity, RestoreNumber):
@@ -83,4 +98,14 @@ class MarstekPassiveNumber(MarstekEntity, RestoreNumber):
         setattr(self.coordinator, self.entity_description.key, int(value))
         if self.coordinator.data.status.device_mode == "passive":
             await self.coordinator.async_set_mode("passive")
+        self.async_write_ha_state()
+
+
+class MarstekDodNumber(MarstekPassiveNumber):
+    """Depth of discharge; shows the last written value since the API cannot read it."""
+
+    @override
+    async def async_set_native_value(self, value: float) -> None:
+        """Write the depth of discharge to the device."""
+        await self.coordinator.async_set_dod(int(value))
         self.async_write_ha_state()

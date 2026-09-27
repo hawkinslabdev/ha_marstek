@@ -10,6 +10,8 @@ UNAVAILABLE_POLLS: Final = 2
 REQUEST_TIMEOUT: Final = 5.0
 UNREACHABLE_POLLS: Final = 10
 OPEN_API_REVISION: Final = "3.1"
+SYS_MIN_FIRMWARE: Final = 150
+DEFAULT_DOD: Final = 88
 
 CONF_BLE_MAC: Final = "ble_mac"
 CONF_DEVICE_TYPE: Final = "device_type"

@@ -42,10 +42,12 @@ The integration currently supports these device types. A device may report eithe
 | Device | Supported | Reported device type |
 | --- | --- | --- |
 | Venus A | Yes | `VNSA-0`, `VenusA`, `Venus A` |
+| Venus C | No | — |
 | Venus D | Yes | `VNSD-0`, `VenusD`, `Venus D` |
 | Venus E 1.0 | No | — |
 | Venus E 2.0 | No | — |
 | Venus E 3.0 | Yes | `VNSE3-0`, `VenusE 3.0`, `Venus E 3.0` |
+| Venus E mini | No | — |
 
 Support depends on the device firmware exposing the Marstek Open API. Other device types are rejected during setup until they are explicitly supported.
 
@@ -72,9 +74,25 @@ Support depends on the device firmware exposing the Marstek Open API. Other devi
 | Operating mode | Select (`Auto`, `AI`, `Passive`, `UPS`) | `ES.SetMode`; `Manual` requires an app schedule and reports as unknown |
 | Passive power | Number (W, −2500 to 2500) | `passive_cfg.power`; negative charges, positive discharges |
 | Passive duration | Number (s, 60 to 86400) | `passive_cfg.cd_time` |
+| Depth of discharge | Number (%, 30 to 88, default 88) | `DOD.SET`; firmware 150 and later |
 | Error state | Sensor (enum, diagnostic) | Outcome of the latest poll |
 
 Passive power and duration are stored in Home Assistant and restored after restart. Changes apply immediately while the device is in passive mode, otherwise on the next switch to `Passive`.
+
+</details>
+
+<details>
+<summary>Features by firmware version</summary>
+
+<br>
+
+Some settings require a specific minimum device firmware, as detailed in Marstek's [Open API specification](https://static-eu.marstekenergy.com/ems/resource/agreement/MarstekDeviceOpenApi.pdf). During setup, the integration checks your device's firmware version and creates only the supported entities. If the version cannot be read, these entities are skipped and no changes are written to your device.
+
+| Firmware | Entity | Behavior |
+| --- | --- | --- |
+| 150+ | Depth of discharge (`DOD.SET`) | Shows the last value written from Home Assistant (restored after a restart). App changes are not reflected because the API lacks a read command. |
+
+After updating your firmware, remember to reload the integration so new entities are created.
 
 </details>
 
@@ -112,7 +130,7 @@ Readings that drop to implausible values are replaced with the previous value: e
 
 <br>
 
-A repair issue is raised after 10 consecutive polls (5 minutes) without an Open API response, a common result of firmware updates resetting Open API. The issue clears on the next successful poll. Entities report `unavailable` while the device is silent.
+A repair issue is raised after 10 consecutive polls (10 minutes) without an Open API response, a common result of firmware updates resetting Open API. The issue clears on the next successful poll. Entities keep their last values through one missed poll and report `unavailable` after 2 consecutive missed polls (2 minutes).
 
 The **Error state** diagnostic sensor reports the outcome of the latest poll (`none`, `no_response`, `network_error`, `invalid_data`) and stays available during outages. Log entries identify the device by `<ip>:<port>`; setup logs the model, reported device type, firmware version, and Open API revision (3.1).
 

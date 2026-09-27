@@ -57,6 +57,7 @@ def udp_client(
     client.is_polling_paused.return_value = False
     client.results = {HOST: {"ES.GetStatus": es_status}}
     client.async_set_mode = AsyncMock(return_value=True)
+    client.async_set_dod = AsyncMock(return_value=True)
     with (
         patch(
             "custom_components.marstek_hacs.helpers.MarstekClient", return_value=client

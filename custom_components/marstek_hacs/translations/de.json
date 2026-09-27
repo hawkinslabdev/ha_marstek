@@ -50,6 +50,9 @@
             },
             "passive_power": {
                 "name": "Leistung im Passivmodus"
+            },
+            "dod": {
+                "name": "Entladetiefe"
             }
         },
         "select": {
@@ -208,6 +211,12 @@
         },
         "unsupported_device": {
             "message": "Der Marstek-Gerätetyp {device_type} wird noch nicht unterstützt."
+        },
+        "set_dod_failed": {
+            "message": "Die Entladetiefe des Marstek-Geräts unter {host} konnte nicht eingestellt werden."
+        },
+        "set_dod_rejected": {
+            "message": "Das Marstek-Gerät hat die Entladetiefe {value} % abgelehnt."
         }
     },
     "issues": {

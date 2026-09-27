@@ -17,6 +17,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    DEFAULT_DOD,
     DEFAULT_PORT,
     DOMAIN,
     OPEN_API_REVISION,
@@ -64,6 +65,7 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
     device_info: MarstekDeviceInfo
     passive_power: int = 0
     passive_duration: int = 3600
+    dod: int = DEFAULT_DOD
     failed_polls: int = 0
     polls_total: int = 0
     polls_failed_total: int = 0
@@ -239,3 +241,22 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
         self.async_set_updated_data(
             replace(self.data, status=replace(self.data.status, device_mode=mode))
         )
+
+    async def async_set_dod(self, value: int) -> None:
+        """Write the depth of discharge; the device offers no way to read it back."""
+        try:
+            async with self.io_lock:
+                accepted = await self.udp_client.async_set_dod(self.device_ip, value)
+        except (TimeoutError, OSError) as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="set_dod_failed",
+                translation_placeholders={"host": self.device_ip},
+            ) from err
+        if not accepted:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="set_dod_rejected",
+                translation_placeholders={"value": str(value)},
+            )
+        self.dod = value
