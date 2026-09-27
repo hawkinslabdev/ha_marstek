@@ -1,6 +1,7 @@
 """Base entity for Marstek devices."""
 
 from homeassistant.helpers.entity import EntityDescription
+from homeassistant.helpers.translation import async_get_cached_translations
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
@@ -32,3 +33,11 @@ class MarstekEntity(CoordinatorEntity[MarstekDataUpdateCoordinator]):
             "model_id": device_info.device_type,
             "sw_version": str(device_info.version),
         }
+
+    @property
+    def suggested_object_id(self) -> str | None:
+        """Return the English name so entity IDs match across languages."""
+        return async_get_cached_translations(self.hass, "en", "entity", DOMAIN).get(
+            f"component.{DOMAIN}.entity.{self.platform.domain}"
+            f".{self.entity_description.translation_key}.name"
+        )

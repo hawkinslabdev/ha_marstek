@@ -41,3 +41,17 @@ async def test_dutch_entity_name(hass: HomeAssistant) -> None:
         translations[f"component.{DOMAIN}.entity.sensor.battery_soc.name"]
         == "Laadpercentage"
     )
+
+
+@pytest.fixture
+def dutch(hass: HomeAssistant) -> None:
+    """Run Home Assistant in Dutch."""
+    hass.config.language = "nl"
+
+
+@pytest.mark.usefixtures("dutch", "init_integration")
+async def test_entity_ids_english_on_dutch_instance(hass: HomeAssistant) -> None:
+    """Entity IDs follow the English names whatever the instance language."""
+    state = hass.states.get("sensor.marstek_venus_e_3_0_state_of_charge")
+    assert state is not None
+    assert state.attributes["friendly_name"] == "Marstek Venus E 3.0 Laadpercentage"

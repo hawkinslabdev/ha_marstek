@@ -7,6 +7,7 @@ from homeassistant.exceptions import (
     ConfigEntryError,
     ConfigEntryNotReady,
 )
+from homeassistant.helpers.translation import async_get_translations
 
 from .const import DEFAULT_PORT, DOMAIN
 from .coordinator import (
@@ -44,6 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MarstekConfigEntry) -> b
         raise
 
     async_migrate_entity_ids(hass, entry.entry_id, coordinator.device_info.device_type)
+    await async_get_translations(hass, "en", "entity", {DOMAIN})
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
