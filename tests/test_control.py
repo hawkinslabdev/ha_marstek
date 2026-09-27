@@ -4,8 +4,12 @@ import asyncio
 from unittest.mock import MagicMock
 
 from aiomarstek import MarstekDeviceStatus
+from freezegun.api import FrozenDateTimeFactory
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant_custom_component.common import (
+    MockConfigEntry,
+    async_fire_time_changed,
+)
 
 from homeassistant.components.number import (
     ATTR_VALUE,
@@ -22,6 +26,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
 from .conftest import HOST
+from custom_components.marstek_hacs.coordinator import SCAN_INTERVAL
 
 SELECT = "select.marstek_venus_e_3_0_operating_mode"
 POWER = "number.marstek_venus_e_3_0_passive_power"
@@ -119,3 +124,27 @@ async def test_set_mode_waits_for_poll(
     await poll
     await select
     udp_client.async_set_mode.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "device_status", [MarstekDeviceStatus(device_ip=HOST, device_mode="passive")]
+)
+async def test_reload_does_not_send_mode(
+    hass: HomeAssistant,
+    udp_client: MagicMock,
+    init_integration: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Restored passive settings and polling never write to the device."""
+    await _set(hass, POWER, 500)
+    udp_client.async_set_mode.reset_mock()
+
+    assert await hass.config_entries.async_reload(init_integration.entry_id)
+    await hass.async_block_till_done()
+    for _ in range(3):
+        freezer.tick(SCAN_INTERVAL)
+        async_fire_time_changed(hass)
+        await hass.async_block_till_done()
+
+    assert hass.states.get(POWER).state == "500"
+    udp_client.async_set_mode.assert_not_called()
