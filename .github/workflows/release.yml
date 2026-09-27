@@ -42,5 +42,20 @@ jobs:
       - name: Package integration
         working-directory: custom_components/marstek_hacs
         run: zip -r "$GITHUB_WORKSPACE/marstek.zip" . -x '__pycache__/*'
+      - name: Generate release notes
+        run: |
+          PREV=$(gh release view --json tagName --jq .tagName)
+          {
+            echo "### Changes"
+            echo
+            gh api "repos/$GITHUB_REPOSITORY/compare/$PREV...$GITHUB_SHA" --jq '
+              def rank: if test("^feat[(!:]") then 0 elif test("^fix[(!:]") then 1
+                elif test("^security[(!:]"; "i") then 2 elif test("^chore[(!:]") then 3 else 4 end;
+              [.commits[] | select(.parents | length == 1)
+                | {s: (.commit.message | split("\n")[0]), h: .sha[0:7], a: (.author.login // .commit.author.name)}]
+              | sort_by(.s | rank) | .[] | "* [x] \(.s) from \(.h) by @\(.a)"'
+            echo
+            echo "**Full Changelog**: https://github.com/$GITHUB_REPOSITORY/compare/$PREV...v$VERSION"
+          } > release_notes.md
       - name: Tag and publish release
-        run: gh release create "v$VERSION" marstek.zip --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
+        run: gh release create "v$VERSION" marstek.zip --target "$GITHUB_SHA" --title "v$VERSION" --notes-file release_notes.md

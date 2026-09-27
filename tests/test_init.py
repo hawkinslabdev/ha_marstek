@@ -11,6 +11,7 @@ from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
     async_fire_time_changed,
 )
+from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
 
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
@@ -19,6 +20,7 @@ from homeassistant.helpers import (
     entity_registry as er,
     issue_registry as ir,
 )
+from homeassistant.setup import async_setup_component
 
 from .conftest import HOST
 from custom_components.marstek_hacs.const import (
@@ -203,3 +205,14 @@ async def test_legacy_entity_ids_migrated(
         (DOMAIN, device_info.stable_id), entry.entry_id
     )
     assert device.name == "Marstek Venus E 3.0"
+
+
+async def test_brand_icon_served(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
+) -> None:
+    """The bundled brand icon is served for the integration domain."""
+    assert await async_setup_component(hass, "brands", {})
+    client = await hass_client()
+    response = await client.get(f"/api/brands/integration/{DOMAIN}/icon.png")
+    assert response.status == 200
+    assert response.content_type == "image/png"
