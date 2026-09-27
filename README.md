@@ -1,10 +1,16 @@
-# Marstek for Home Assistant
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hawkinslabdev/ha_marstek/refs/heads/main/custom_components/marstek_hacs/brand/icon.png" alt="Logo" width="120" height="120">
+</p>
 
-[![HACS](https://img.shields.io/badge/HACS-Install_this_repository-41BDF5?logo=homeassistantcommunitystore&logoColor=white)](https://my.home-assistant.io/redirect/hacs_repository/?owner=hawkinslabdev&repository=ha_marstek&category=integration)
-[![Tests](https://img.shields.io/github/actions/workflow/status/hawkinslabdev/ha_marstek/tests.yml?branch=main&label=tests)](https://github.com/hawkinslabdev/ha_marstek/actions/workflows/tests.yml)
-[![License](https://img.shields.io/badge/license-non--commercial-orange.svg)](LICENSE.md)
+<h1 align="center">Marstek for Home Assistant</h1>
 
-An unofficial Home Assistant integration, forked from the original Marstek integration, that communicates locally with supported Marstek energy storage devices over UDP using OpenAPI instead of Modbus TCP to expose device status as native sensors.
+<p align="center">
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=hawkinslabdev&repository=ha_marstek&category=integration"><img src="https://img.shields.io/badge/HACS-Install_this_repository-41BDF5?logo=homeassistantcommunitystore&logoColor=white" alt="HACS"></a>
+  <a href="https://github.com/hawkinslabdev/ha_marstek/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/hawkinslabdev/ha_marstek/tests.yml?branch=main&label=tests" alt="Tests"></a>
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-non--commercial-orange.svg" alt="License"></a>
+</p>
+
+Bring your Marstek batteries into Home Assistant through HACS. This unofficial integration is a fork of the original Marstek integration. It connects locally to supported Marstek energy storage devices over UDP using OpenAPI rather than Modbus TCP, and exposes their status as native Home Assistant sensors.
 
 ## Installation
 
