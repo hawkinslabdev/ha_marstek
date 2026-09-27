@@ -25,9 +25,7 @@ Installation runs through [HACS](https://hacs.xyz) as a custom repository. The b
    - **Search for devices on the local network**: UDP broadcast discovery.
    - **Enter device IP address**: manual setup.
 
-Setup requires the device to be powered on, reachable from Home Assistant, and running with Open API enabled.
-
-The integration domain is `marstek_hacs` (folder `custom_components/marstek_hacs`) and runs alongside the official `marstek` integration. Installations from before the rename use the `marstek` domain: remove that config entry and the `custom_components/marstek` folder, then add the integration again. Entity IDs derive from the device name and are unchanged.
+Setup requires the device to be powered on, reachable from Home Assistant, and running with Open API enabled (on any port).
 
 ## Requirements
 
