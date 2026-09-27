@@ -1,0 +1,219 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Gerät ist bereits konfiguriert",
+            "missing_unique_id": "Das Gerät hat keine feste eindeutige ID geliefert",
+            "unsupported_device": "Dieser Marstek-Gerätetyp wird noch nicht unterstützt"
+        },
+        "error": {
+            "cannot_connect": "Keine Verbindung zum Gerät möglich",
+            "device_not_found": "Kein Gerät unter dieser IP-Adresse gefunden",
+            "discovery_failed": "Die Gerätesuche ist fehlgeschlagen. Bitte prüfe dein Netzwerk und versuche es noch einmal.",
+            "no_devices_found": "Keine Marstek-Geräte im Netzwerk gefunden. Bitte prüfe, ob das Gerät eingeschaltet und im selben Netzwerk ist.",
+            "unsupported_device": "Dieser Marstek-Gerätetyp wird noch nicht unterstützt"
+        },
+        "step": {
+            "discover": {
+                "data": {
+                    "device": "Gerät auswählen"
+                },
+                "data_description": {
+                    "device": "Das Marstek-Gerät, das in deinem lokalen Netzwerk gefunden wurde."
+                },
+                "title": "Marstek-Energiespeicher"
+            },
+            "manual": {
+                "data": {
+                    "host": "Host",
+                    "port": "Port"
+                },
+                "data_description": {
+                    "host": "Die IP-Adresse deines Marstek-Geräts in deinem lokalen Netzwerk.",
+                    "port": "UDP-Port der Open API, eingestellt in der Marstek-App. Leer lassen, um zuerst 30000 zu testen und danach 49152–65535 zu durchsuchen."
+                },
+                "description": "Gib die IP-Adresse deines Marstek-Geräts ein. Das Gerät muss im selben lokalen Netzwerk sein und Open API muss eingeschaltet sein.",
+                "title": "Marstek-Gerät hinzufügen"
+            },
+            "user": {
+                "menu_options": {
+                    "discover": "Geräte im lokalen Netzwerk suchen",
+                    "manual": "IP-Adresse des Geräts eingeben"
+                },
+                "title": "Marstek-Energiespeicher"
+            }
+        }
+    },
+    "entity": {
+        "number": {
+            "passive_duration": {
+                "name": "Dauer im Passivmodus"
+            },
+            "passive_power": {
+                "name": "Leistung im Passivmodus"
+            }
+        },
+        "select": {
+            "operating_mode": {
+                "name": "Betriebsart",
+                "state": {
+                    "ai": "KI",
+                    "auto": "Auto",
+                    "passive": "Passiv",
+                    "ups": "USV"
+                }
+            }
+        },
+        "sensor": {
+            "battery_charge_power": {
+                "name": "Ladeleistung"
+            },
+            "battery_discharge_power": {
+                "name": "Entladeleistung"
+            },
+            "battery_energy_in": {
+                "name": "Geladene Energie"
+            },
+            "battery_energy_out": {
+                "name": "Entladene Energie"
+            },
+            "battery_power": {
+                "name": "Batterieleistung"
+            },
+            "battery_soc": {
+                "name": "Ladezustand"
+            },
+            "battery_status": {
+                "name": "Batteriestatus",
+                "state": {
+                    "charging": "Wird geladen",
+                    "discharging": "Wird entladen",
+                    "idle": "Leerlauf"
+                }
+            },
+            "device_mode": {
+                "name": "Gerätemodus",
+                "state": {
+                    "ai": "KI",
+                    "auto": "Auto",
+                    "manual": "Manuell",
+                    "passive": "Passiv",
+                    "ups": "USV"
+                }
+            },
+            "error_state": {
+                "name": "Fehlerstatus",
+                "state": {
+                    "invalid_data": "Ungültige Daten",
+                    "network_error": "Netzwerkfehler",
+                    "no_response": "Keine Antwort",
+                    "none": "Kein Fehler"
+                }
+            },
+            "pv1_current": {
+                "name": "PV1 Strom"
+            },
+            "pv1_power": {
+                "name": "PV1 Leistung"
+            },
+            "pv1_state": {
+                "name": "PV1 Status",
+                "state": {
+                    "standby": "Standby",
+                    "working": "In Betrieb"
+                }
+            },
+            "pv1_voltage": {
+                "name": "PV1 Spannung"
+            },
+            "pv2_current": {
+                "name": "PV2 Strom"
+            },
+            "pv2_power": {
+                "name": "PV2 Leistung"
+            },
+            "pv2_state": {
+                "name": "PV2 Status",
+                "state": {
+                    "standby": "Standby",
+                    "working": "In Betrieb"
+                }
+            },
+            "pv2_voltage": {
+                "name": "PV2 Spannung"
+            },
+            "pv3_current": {
+                "name": "PV3 Strom"
+            },
+            "pv3_power": {
+                "name": "PV3 Leistung"
+            },
+            "pv3_state": {
+                "name": "PV3 Status",
+                "state": {
+                    "standby": "Standby",
+                    "working": "In Betrieb"
+                }
+            },
+            "pv3_voltage": {
+                "name": "PV3 Spannung"
+            },
+            "pv4_current": {
+                "name": "PV4 Strom"
+            },
+            "pv4_power": {
+                "name": "PV4 Leistung"
+            },
+            "pv4_state": {
+                "name": "PV4 Status",
+                "state": {
+                    "standby": "Standby",
+                    "working": "In Betrieb"
+                }
+            },
+            "pv4_voltage": {
+                "name": "PV4 Spannung"
+            },
+            "stored_energy": {
+                "name": "Gespeicherte Energie"
+            },
+            "battery_cycles": {
+                "name": "Batteriezyklen"
+            },
+            "total_pv_energy": {
+                "name": "PV-Energie gesamt"
+            }
+        }
+    },
+    "exceptions": {
+        "device_connection_failed": {
+            "message": "Keine Verbindung zum Marstek-Gerät unter {host} möglich."
+        },
+        "device_update_failed": {
+            "message": "Das Marstek-Gerät unter {host} konnte nicht aktualisiert werden: {reason}."
+        },
+        "invalid_device_data": {
+            "message": "Das Marstek-Gerät unter {host} hat ungültige Daten geliefert."
+        },
+        "missing_stable_id": {
+            "message": "Das Marstek-Gerät unter {host} hat keine feste ID geliefert."
+        },
+        "set_mode_failed": {
+            "message": "Die Betriebsart des Marstek-Geräts unter {host} konnte nicht geändert werden."
+        },
+        "set_mode_rejected": {
+            "message": "Das Marstek-Gerät hat die Betriebsart {mode} abgelehnt."
+        },
+        "udp_client_setup_failed": {
+            "message": "Der Marstek-UDP-Client konnte nicht eingerichtet werden."
+        },
+        "unsupported_device": {
+            "message": "Der Marstek-Gerätetyp {device_type} wird noch nicht unterstützt."
+        }
+    },
+    "issues": {
+        "open_api_unreachable": {
+            "title": "Marstek Open API antwortet nicht",
+            "description": "Das Marstek-Gerät unter {host} antwortet nicht mehr auf Open-API-Anfragen. Ein Firmware-Update oder ein Reset kann Open API ausschalten. Schalte Open API wieder ein und prüfe den UDP-Port in der Marstek-App. Diese Meldung verschwindet nach der nächsten erfolgreichen Abfrage."
+        }
+    }
+}

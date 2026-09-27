@@ -213,7 +213,7 @@
     "issues": {
         "open_api_unreachable": {
             "title": "Marstek Open API not responding",
-            "description": "The Marstek device at {host} has not answered Open API requests for 5 minutes. Firmware updates and resets can disable Open API. Re-enable Open API and confirm the UDP port in the Marstek app. This issue clears on the next successful poll."
+            "description": "The Marstek device at {host} has stopped answering Open API requests. Firmware updates and resets can disable Open API. Re-enable Open API and confirm the UDP port in the Marstek app. This issue clears on the next successful poll."
         }
     }
 }

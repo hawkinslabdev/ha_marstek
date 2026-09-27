@@ -1,0 +1,219 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Apparaat is al geconfigureerd",
+            "missing_unique_id": "Het apparaat gaf geen vaste unieke ID",
+            "unsupported_device": "Dit type Marstek-apparaat wordt nog niet ondersteund"
+        },
+        "error": {
+            "cannot_connect": "Kan geen verbinding maken met het apparaat",
+            "device_not_found": "Geen apparaat gevonden op dit IP-adres",
+            "discovery_failed": "Zoeken naar apparaten is mislukt. Controleer je netwerk en probeer het opnieuw.",
+            "no_devices_found": "Geen Marstek-apparaten gevonden op het netwerk. Controleer of het apparaat aan staat en op hetzelfde netwerk zit.",
+            "unsupported_device": "Dit type Marstek-apparaat wordt nog niet ondersteund"
+        },
+        "step": {
+            "discover": {
+                "data": {
+                    "device": "Kies apparaat"
+                },
+                "data_description": {
+                    "device": "Het Marstek-apparaat dat op je lokale netwerk is gevonden."
+                },
+                "title": "Marstek-thuisbatterij"
+            },
+            "manual": {
+                "data": {
+                    "host": "Host",
+                    "port": "Poort"
+                },
+                "data_description": {
+                    "host": "Het IP-adres van je Marstek-apparaat op je lokale netwerk.",
+                    "port": "UDP-poort van de Open API, ingesteld in de Marstek-app. Laat leeg om eerst 30000 te proberen en daarna 49152–65535 te scannen."
+                },
+                "description": "Vul het IP-adres van je Marstek-apparaat in. Het apparaat moet op hetzelfde lokale netwerk zitten en Open API moet aan staan.",
+                "title": "Marstek-apparaat toevoegen"
+            },
+            "user": {
+                "menu_options": {
+                    "discover": "Zoek apparaten op het lokale netwerk",
+                    "manual": "IP-adres van het apparaat invullen"
+                },
+                "title": "Marstek-thuisbatterij"
+            }
+        }
+    },
+    "entity": {
+        "number": {
+            "passive_duration": {
+                "name": "Duur passieve modus"
+            },
+            "passive_power": {
+                "name": "Vermogen passieve modus"
+            }
+        },
+        "select": {
+            "operating_mode": {
+                "name": "Bedrijfsmodus",
+                "state": {
+                    "ai": "AI",
+                    "auto": "Automatisch",
+                    "passive": "Passief",
+                    "ups": "UPS"
+                }
+            }
+        },
+        "sensor": {
+            "battery_charge_power": {
+                "name": "Laadvermogen"
+            },
+            "battery_discharge_power": {
+                "name": "Ontlaadvermogen"
+            },
+            "battery_energy_in": {
+                "name": "Geladen energie"
+            },
+            "battery_energy_out": {
+                "name": "Ontladen energie"
+            },
+            "battery_power": {
+                "name": "Batterijvermogen"
+            },
+            "battery_soc": {
+                "name": "Laadpercentage"
+            },
+            "battery_status": {
+                "name": "Batterijstatus",
+                "state": {
+                    "charging": "Opladen",
+                    "discharging": "Ontladen",
+                    "idle": "Inactief"
+                }
+            },
+            "device_mode": {
+                "name": "Apparaatmodus",
+                "state": {
+                    "ai": "AI",
+                    "auto": "Automatisch",
+                    "manual": "Handmatig",
+                    "passive": "Passief",
+                    "ups": "UPS"
+                }
+            },
+            "error_state": {
+                "name": "Foutstatus",
+                "state": {
+                    "invalid_data": "Ongeldige gegevens",
+                    "network_error": "Netwerkfout",
+                    "no_response": "Geen antwoord",
+                    "none": "Geen fout"
+                }
+            },
+            "pv1_current": {
+                "name": "PV1 stroom"
+            },
+            "pv1_power": {
+                "name": "PV1 vermogen"
+            },
+            "pv1_state": {
+                "name": "PV1 status",
+                "state": {
+                    "standby": "Stand-by",
+                    "working": "Actief"
+                }
+            },
+            "pv1_voltage": {
+                "name": "PV1 spanning"
+            },
+            "pv2_current": {
+                "name": "PV2 stroom"
+            },
+            "pv2_power": {
+                "name": "PV2 vermogen"
+            },
+            "pv2_state": {
+                "name": "PV2 status",
+                "state": {
+                    "standby": "Stand-by",
+                    "working": "Actief"
+                }
+            },
+            "pv2_voltage": {
+                "name": "PV2 spanning"
+            },
+            "pv3_current": {
+                "name": "PV3 stroom"
+            },
+            "pv3_power": {
+                "name": "PV3 vermogen"
+            },
+            "pv3_state": {
+                "name": "PV3 status",
+                "state": {
+                    "standby": "Stand-by",
+                    "working": "Actief"
+                }
+            },
+            "pv3_voltage": {
+                "name": "PV3 spanning"
+            },
+            "pv4_current": {
+                "name": "PV4 stroom"
+            },
+            "pv4_power": {
+                "name": "PV4 vermogen"
+            },
+            "pv4_state": {
+                "name": "PV4 status",
+                "state": {
+                    "standby": "Stand-by",
+                    "working": "Actief"
+                }
+            },
+            "pv4_voltage": {
+                "name": "PV4 spanning"
+            },
+            "stored_energy": {
+                "name": "Opgeslagen energie"
+            },
+            "battery_cycles": {
+                "name": "Batterijcycli"
+            },
+            "total_pv_energy": {
+                "name": "Totale PV-energie"
+            }
+        }
+    },
+    "exceptions": {
+        "device_connection_failed": {
+            "message": "Kan geen verbinding maken met het Marstek-apparaat op {host}."
+        },
+        "device_update_failed": {
+            "message": "Kan het Marstek-apparaat op {host} niet bijwerken: {reason}."
+        },
+        "invalid_device_data": {
+            "message": "Het Marstek-apparaat op {host} gaf ongeldige gegevens."
+        },
+        "missing_stable_id": {
+            "message": "Het Marstek-apparaat op {host} gaf geen vaste ID."
+        },
+        "set_mode_failed": {
+            "message": "Kan de bedrijfsmodus van het Marstek-apparaat op {host} niet wijzigen."
+        },
+        "set_mode_rejected": {
+            "message": "Het Marstek-apparaat heeft bedrijfsmodus {mode} geweigerd."
+        },
+        "udp_client_setup_failed": {
+            "message": "Kan de Marstek UDP-client niet instellen."
+        },
+        "unsupported_device": {
+            "message": "Het Marstek-apparaattype {device_type} wordt nog niet ondersteund."
+        }
+    },
+    "issues": {
+        "open_api_unreachable": {
+            "title": "Marstek Open API reageert niet",
+            "description": "Het Marstek-apparaat op {host} reageert niet meer op Open API-verzoeken. Een firmware-update of reset kan Open API uitzetten. Zet Open API weer aan en controleer de UDP-poort in de Marstek-app. Deze melding verdwijnt na de volgende geslaagde update."
+        }
+    }
+}
