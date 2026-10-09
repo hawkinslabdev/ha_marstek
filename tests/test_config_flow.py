@@ -2,6 +2,8 @@
 
 from unittest.mock import MagicMock, patch
 
+from aiomarstek import MarstekDeviceInfo
+
 from homeassistant.config_entries import SOURCE_USER
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
@@ -27,6 +29,16 @@ async def test_manual_default_port(hass: HomeAssistant, udp_client: MagicMock) -
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_PORT] == 30000
     assert result["title"] == f"Marstek Venus E 3.0 ({HOST})"
+
+
+async def test_manual_venus_mini(hass: HomeAssistant, udp_client: MagicMock) -> None:
+    """Venus Mini (VNSEM-0) is a supported device type."""
+    udp_client.get_device_info.return_value = MarstekDeviceInfo.from_response(
+        {"device": "VNSEM-0", "ver": 147, "wifi_mac": "aabbccddeeff"}, HOST
+    )
+    result = await _manual_flow(hass, {CONF_HOST: HOST})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["title"] == f"Marstek Venus Mini ({HOST})"
 
 
 async def test_manual_finds_custom_port(

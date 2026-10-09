@@ -25,9 +25,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Marstek operating mode select."""
-    async_add_entities(
-        [MarstekModeSelect(config_entry.runtime_data.coordinator, OPERATING_MODE)]
-    )
+    async_add_entities([MarstekModeSelect(config_entry.runtime_data, OPERATING_MODE)])
 
 
 class MarstekModeSelect(MarstekEntity, SelectEntity):

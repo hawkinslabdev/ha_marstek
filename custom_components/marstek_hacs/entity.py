@@ -1,5 +1,6 @@
 """Base entity for Marstek devices."""
 
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.translation import async_get_cached_translations
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -25,14 +26,14 @@ class MarstekEntity(CoordinatorEntity[MarstekDataUpdateCoordinator]):
 
         device_info = coordinator.device_info
         self._attr_unique_id = f"{device_info.stable_id}_{entity_description.key}"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, device_info.stable_id)},
-            "name": f"Marstek {model_name(device_info.device_type)}",
-            "manufacturer": "Marstek",
-            "model": model_name(device_info.device_type),
-            "model_id": device_info.device_type,
-            "sw_version": str(device_info.version),
-        }
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_info.stable_id)},
+            name=f"Marstek {model_name(device_info.device_type)}",
+            manufacturer="Marstek",
+            model=model_name(device_info.device_type),
+            model_id=device_info.device_type,
+            sw_version=str(device_info.version),
+        )
 
     @property
     def suggested_object_id(self) -> str | None:

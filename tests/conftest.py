@@ -54,7 +54,6 @@ def udp_client(
     client.get_device_info = AsyncMock(return_value=device_info)
     client.get_device_status = AsyncMock(return_value=device_status)
     client.discover_devices = AsyncMock(return_value=[device_info])
-    client.is_polling_paused.return_value = False
     client.results = {HOST: {"ES.GetStatus": es_status}}
     client.async_set_mode = AsyncMock(return_value=True)
     client.async_set_dod = AsyncMock(return_value=True)

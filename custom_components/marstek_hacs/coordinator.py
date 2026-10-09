@@ -48,14 +48,7 @@ class MarstekData:
     es: dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass(slots=True, kw_only=True)
-class MarstekRuntimeData:
-    """Runtime data for a Marstek config entry."""
-
-    coordinator: MarstekDataUpdateCoordinator
-
-
-type MarstekConfigEntry = ConfigEntry[MarstekRuntimeData]
+type MarstekConfigEntry = ConfigEntry[MarstekDataUpdateCoordinator]
 
 
 class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
@@ -143,14 +136,6 @@ class MarstekDataUpdateCoordinator(DataUpdateCoordinator[MarstekData]):
         """Fetch device data from the Marstek client library."""
         _LOGGER.debug("Start polling device: %s", self.device_ip)
         previous = self.data
-
-        if self.udp_client.is_polling_paused(self.device_ip):
-            _LOGGER.debug(
-                "Polling paused for device: %s, skipping update", self.device_ip
-            )
-            return previous or MarstekData(
-                status=MarstekDeviceStatus(device_ip=self.device_ip)
-            )
 
         self.polls_total += 1
         try:

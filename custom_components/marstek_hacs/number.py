@@ -62,7 +62,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Marstek passive mode settings."""
-    coordinator = config_entry.runtime_data.coordinator
+    coordinator = config_entry.runtime_data
     entities: list[RestoreNumber] = [
         MarstekPassiveNumber(coordinator, description)
         for description in NUMBER_DESCRIPTIONS

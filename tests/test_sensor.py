@@ -9,6 +9,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.icon import async_get_icons
 
 from .conftest import HOST
 from custom_components.marstek_hacs.const import DOMAIN
@@ -112,6 +113,16 @@ async def test_no_pv_entities_on_venus_e(hass: HomeAssistant) -> None:
     """Venus E has no PV inputs."""
     assert hass.states.get(f"{PREFIX}_pv1_power") is None
     assert hass.states.get(f"{PREFIX}_lifetime_pv_energy") is None
+
+
+@pytest.mark.usefixtures("init_integration")
+async def test_icons_from_icon_translations(hass: HomeAssistant) -> None:
+    """Sensor icons are defined in icons.json."""
+    icons = await async_get_icons(hass, "entity", {DOMAIN})
+    sensors = icons[DOMAIN]["sensor"]
+    assert sensors["battery_status"]["default"] == "mdi:battery"
+    assert sensors["pv4_state"]["default"] == "mdi:state-machine"
+    assert "icon" not in hass.states.get(f"{PREFIX}_battery_status").attributes
 
 
 @pytest.mark.parametrize(

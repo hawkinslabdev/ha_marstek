@@ -29,6 +29,7 @@ SUPPORTED_DEVICE_TYPES: Final[dict[str, str]] = {
     "VNSE3-0": "Venus E 3.0",
     "VenusE 3.0": "Venus E 3.0",
     "Venus E 3.0": "Venus E 3.0",
+    "VNSEM-0": "Venus Mini",
 }
 
 PV_STATE_OPTIONS: Final = ("standby", "working")

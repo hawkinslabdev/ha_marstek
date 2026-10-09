@@ -32,6 +32,8 @@ Setup requires the device to be powered on, reachable from Home Assistant, and r
 - Home Assistant Core 2026+
 - Home Assistant and the Marstek device must be on the same local network.
 - Open API must be enabled on the Marstek device.
+- Discovery requires host networking when Home Assistant runs in Docker. Without host networking, use manual setup.
+- Client isolation (guest networks, IoT VLANs) blocks discovery broadcasts. Manual setup by IP address requires unicast UDP between Home Assistant and the device.
 
 ## Supported Devices
 
@@ -45,7 +47,7 @@ The integration currently supports these device types. A device may report eithe
 | Venus E 1.0 | No | — |
 | Venus E 2.0 | No | — |
 | Venus E 3.0 | Yes | `VNSE3-0`, `VenusE 3.0`, `Venus E 3.0` |
-| Venus E mini | No | — |
+| Venus Mini | Yes | `VNSEM-0` |
 
 Support depends on the device firmware exposing the Marstek Open API. Other device types are rejected during setup until they are explicitly supported.
 

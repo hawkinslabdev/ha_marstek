@@ -112,7 +112,7 @@ async def test_set_mode_waits_for_poll(
     hass: HomeAssistant, init_integration: MockConfigEntry, udp_client: MagicMock
 ) -> None:
     """ES.SetMode is sent only after an in-flight poll finishes."""
-    coordinator = init_integration.runtime_data.coordinator
+    coordinator = init_integration.runtime_data
     status = udp_client.get_device_status.return_value
     release = asyncio.Event()
 

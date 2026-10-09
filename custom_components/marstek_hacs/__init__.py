@@ -13,7 +13,6 @@ from .const import DEFAULT_PORT, DOMAIN
 from .coordinator import (
     MarstekConfigEntry,
     MarstekDataUpdateCoordinator,
-    MarstekRuntimeData,
 )
 from .helpers import (
     async_acquire_client,
@@ -36,7 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MarstekConfigEntry) -> b
         ) from err
 
     coordinator = MarstekDataUpdateCoordinator(hass, entry, udp_client)
-    entry.runtime_data = MarstekRuntimeData(coordinator=coordinator)
+    entry.runtime_data = coordinator
     try:
         await coordinator.async_config_entry_first_refresh()
     except ConfigEntryAuthFailed, ConfigEntryError, ConfigEntryNotReady:
@@ -55,6 +54,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: MarstekConfigEntry) -> 
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        await async_release_client(hass, entry.runtime_data.coordinator.port)
+        await async_release_client(hass, entry.runtime_data.port)
 
     return unload_ok

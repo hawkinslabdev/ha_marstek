@@ -1,0 +1,63 @@
+{
+  "entity": {
+    "sensor": {
+      "battery_cycles": {
+        "default": "mdi:battery-sync"
+      },
+      "battery_status": {
+        "default": "mdi:battery"
+      },
+      "device_mode": {
+        "default": "mdi:cog"
+      },
+      "pv1_current": {
+        "default": "mdi:current-ac"
+      },
+      "pv1_power": {
+        "default": "mdi:solar-power"
+      },
+      "pv1_state": {
+        "default": "mdi:state-machine"
+      },
+      "pv1_voltage": {
+        "default": "mdi:flash"
+      },
+      "pv2_current": {
+        "default": "mdi:current-ac"
+      },
+      "pv2_power": {
+        "default": "mdi:solar-power"
+      },
+      "pv2_state": {
+        "default": "mdi:state-machine"
+      },
+      "pv2_voltage": {
+        "default": "mdi:flash"
+      },
+      "pv3_current": {
+        "default": "mdi:current-ac"
+      },
+      "pv3_power": {
+        "default": "mdi:solar-power"
+      },
+      "pv3_state": {
+        "default": "mdi:state-machine"
+      },
+      "pv3_voltage": {
+        "default": "mdi:flash"
+      },
+      "pv4_current": {
+        "default": "mdi:current-ac"
+      },
+      "pv4_power": {
+        "default": "mdi:solar-power"
+      },
+      "pv4_state": {
+        "default": "mdi:state-machine"
+      },
+      "pv4_voltage": {
+        "default": "mdi:flash"
+      }
+    }
+  }
+}
